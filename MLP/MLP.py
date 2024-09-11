@@ -1,3 +1,5 @@
+# Madeleine Lindström, madeli@kth.se
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -73,14 +75,13 @@ def plot_loss():
     plt.plot(epoch_list, loss_list)
     plt.show()
 
+
 def print_model_parameters():
+    """TODO"""
     print(f"Layer name.parameter: parameter value")
     for name, param in model.state_dict().items():
         print(f"{name}: {param}")
 
-print(f"y: {y}")
-print(f"From training, we get output: {output}")
-print(f"With the loss: {loss}")
 
 print_model_parameters()
 plot_loss()

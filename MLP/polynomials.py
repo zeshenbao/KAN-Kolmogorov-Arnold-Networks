@@ -1,5 +1,6 @@
-# Polynomials used to generate data for testing networks.
+# Madeleine Lindström, madeli@kth.se
 
+# Polynomials used to generate data for testing networks
 def polynomial_d1(x, a, b):
     """Polynomial function of degree 1. Outputs y = ax + b."""
     y = a*x + b
