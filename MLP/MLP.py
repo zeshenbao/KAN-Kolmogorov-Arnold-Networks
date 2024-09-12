@@ -10,47 +10,52 @@ import matplotlib.pyplot as plt
 from polynomials import polynomial_d1, polynomial_d2, polynomial_d3
 
 class MLP(nn.Module):
-    """TODO"""
+    """Creates a Multilayer Perceptron."""
 
-    def __init__(self, input_size=1, hidden_size=1, output_size=1):  # TODO add selection of activator function?
+    def __init__(self, input_size=1, hidden_sizes=[1], output_size=1):
         super(MLP, self).__init__()
-        self.fc1 = nn.Linear(input_size, hidden_size)
-        self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(hidden_size, output_size)
+        self.layers = list()
+
+        i_size = input_size
+
+        for h_size in hidden_sizes:
+            self.layers.append(nn.Linear(i_size, h_size))
+            self.layers.append(nn.ReLU())  # ReLU on all layers
+            i_size = h_size
+        
+        self.layers.append(nn.Linear(i_size, output_size))
+        self.layers = nn.Sequential(*self.layers)
     
     def forward(self, input):
-        x = self.fc1(input)
-        x = self.relu(x)
-        output = self.fc2(x)
-
-        return output
+        return self.layers(x)
 
 # Constants of the network
 input_size = 1
-hidden_size = 1
+hidden_sizes = [2, 4, 8]
 output_size = 1
 
 # Constants of the data
-n_datapoints = 5  # Number of datapoints
+n_datapoints = 100  # Number of datapoints
 
 # Generate test data
-x = torch.rand(n_datapoints, input_size)
-y = polynomial_d3(x, a=2, b=60, c=1, d=15)
-print(x)
-print(y)
+# x = torch.rand(n_datapoints, input_size)  # Random floats [0, 1)
+x = torch.randint(-100, 100, (n_datapoints, input_size)).float()  # Random numbers [low, high]
+x = torch.sort(x, dim=0)[0]
+y = polynomial_d2(x, a=1, b=0, c=5)  # To generate y = f(x)
 
 # Define network
-model = MLP(input_size, hidden_size, output_size)  # Create MLP
+model = MLP(input_size, hidden_sizes, output_size)  # Create MLP
 
 # Define loss, optimizer
 loss_function = nn.MSELoss()  # Mean Squared Error Loss. Alteratively: L1Loss, CrossEntropyLoss
 optimizer = optim.Adam(model.parameters(), lr=0.01)  # Adam optimzier. Alternatively: optim.STD (Stochastic Gradient Descent)
 
 # Training
-n_epochs = 1000
+n_epochs = 5000
 epoch_list = list()
 loss_list = list()
 for epoch in tqdm(range(1, n_epochs)):
+
     optimizer.zero_grad()
 
     # Forward pass
@@ -71,10 +76,27 @@ for epoch in tqdm(range(1, n_epochs)):
 
 
 def plot_loss():
-    """TODO"""
+    """Plots the loss during training."""
+    plt.title("Loss as a Function of Number of Epochs")
+    plt.xlabel("epoch")
+    plt.ylabel("loss")
     plt.plot(epoch_list, loss_list)
     plt.show()
 
+def plot_result():
+    # Sort data
+    print(y)
+    y_approx = model(x).detach()
+    print(y_approx)
+
+    # Plot results
+    plt.title("y as a function of x")
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.plot(x, y, 'r*', label="datapoints")  # Plots datapoints
+    plt.plot(x, y_approx, 'b*', label="approximation")  # Plots approximated datapoints
+    plt.legend()
+    plt.show()
 
 def print_model_parameters():
     """TODO"""
@@ -84,6 +106,6 @@ def print_model_parameters():
 
 
 print_model_parameters()
-plot_loss()
+plot_result()
 
 
