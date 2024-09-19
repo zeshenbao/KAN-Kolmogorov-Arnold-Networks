@@ -8,7 +8,7 @@ def polynomial_d1(x, a, b):
 
 def polynomial_d2(x, a, b, c):
     """Polynomial function of degree 2. Outputs y = ax^2 + bx + c."""
-    y = a*x**2 + b*x + c
+    y = a*(x**2) + b*x + c
     return y
 
 def polynomial_d3(x, a, b, c, d):
