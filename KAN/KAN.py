@@ -12,37 +12,59 @@ print(device)
 
 
 torch.manual_seed(0)
-import os
-print(os.getcwd())
 
-data = pd.read_csv("/Users/zeshenbao/KAN-Kolmogorov-Arnold-Networks/datasets/data2.csv")  #/datasets/
+## Data
+data = pd.read_csv("./datasets/data2.csv")  #/datasets/ #/Users/zeshenbao/KAN-Kolmogorov-Arnold-Networks
 
 X = torch.tensor(data["x"].values).float().unsqueeze(1)
 y = torch.tensor(data["y"].values).float().unsqueeze(1)
 
-plt.plot(X, y, "o", markersize=1, linestyle='None')
-
 
 dataset = create_dataset_from_data(X, y)
 
-#def KAN input, output
 
 kan_model = KAN(width=[1, 10, 10, 1], grid=3, k=5, seed=0)
 
-kan_model.fit(dataset, opt="LBFGS", steps=20, lamb=0.001, lamb_entropy=10.);
+kan_model.fit(dataset, opt="LBFGS", steps=5, lamb=0.001, lamb_entropy=10.);
 
-KAN_preds=kan_model(dataset['test_input']).detach().numpy()
+KAN_preds=kan_model(dataset['test_input']).detach()
 
-#plt.plot(X, y,".-",label='ground_truth')
-plt.scatter(dataset['test_input'], KAN_preds,label='KAN predictions')
-plt.plot(X, y, "o", markersize=1, linestyle='None')
-plt.xlabel("Random X 1D samples")
-plt.ylabel("Function")
-plt.legend()
+##Sort before plot
 
-#print(f"KAN MSE is {sklearn.metrics.mean_squared_error(y, KAN_preds)}")
+def plot_results(x_test, y_pred, x_tot, y_tot, show_model=False, threshold = 0.3):
+    
+    
+    sorted_indices_test = np.argsort(x_test, axis=0)
+    sorted_indices_all = np.argsort(x_tot, axis=0)
+
+    plot_array_test = torch.gather(x_test, dim=0, index=sorted_indices_test)
+    plot_array_pred = torch.gather(y_pred, dim=0, index=sorted_indices_test)
+
+    plot_array_x_tot = torch.gather(x_tot, dim=0, index=sorted_indices_all)
+    plot_array_y_tot = torch.gather(y_tot, dim=0, index=sorted_indices_all)
 
 
-kan_model.plot()
+    plt.plot(plot_array_x_tot, plot_array_y_tot, "o", markersize=1, linestyle='None', label="Data")
+    plt.plot(plot_array_test, plot_array_pred, "--",label='KAN predictions')
+    
 
-plt.show()
+    plt.xlabel("Random X 1D samples")
+    plt.ylabel("Function")
+    plt.legend()
+
+    plt.show()
+
+    if show_model is True:
+        kan_model = kan_model.prune_node(threshold=threshold)
+        kan_model.plot()
+        plt.show()
+
+
+
+x_test = dataset['test_input']
+y_pred = KAN_preds
+
+
+plot_results(x_test, y_pred, X, y)
+
+
