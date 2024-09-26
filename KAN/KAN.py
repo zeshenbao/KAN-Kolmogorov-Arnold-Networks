@@ -6,6 +6,7 @@ import torch
 import pandas as pd
 import seaborn as sns
 from kan import *
+import time
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -27,7 +28,10 @@ def basic_fit(data: pd.DataFrame) -> dict:
     dataset = create_dataset_from_data(X, y)
 
     # Train model
+    start = time.time()
     results = kan_model.fit(dataset, opt="LBFGS", steps=20, lamb=0.001, lamb_entropy=10.)
+    end = time.time()
+    elapsed_time = end - start
 
     # Generate predictions
     KAN_preds = kan_model(dataset['test_input']).detach().numpy()
@@ -113,5 +117,7 @@ def basic_fit(data: pd.DataFrame) -> dict:
 
     # Display the plots
     plt.show()
+
+    print(f"Elapsed Time: {elapsed_time:.3f} seconds")
 
     return results
