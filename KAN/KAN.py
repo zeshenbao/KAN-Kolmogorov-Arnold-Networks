@@ -34,7 +34,7 @@ def basic_fit(data: pd.DataFrame) -> dict:
     elapsed_time = end - start
 
     # Generate predictions
-    KAN_preds = kan_model(dataset['test_input']).detach().numpy()
+    KAN_preds = kan_model(dataset['test_input']).detach()
 
     # Debugging: Inspect results
     print("Keys in results:", results.keys())
@@ -63,19 +63,26 @@ def basic_fit(data: pd.DataFrame) -> dict:
     print("Test Label Shape:", dataset['test_label'].shape)
     print("KAN Predictions Shape:", KAN_preds.shape)
 
-    sns.scatterplot(x=dataset['test_input'][:, 0], y=dataset['test_label'][:, 0],
-                    ax=ax[0], s=20, color='blue', label='Actual Data')
 
-    sns.scatterplot(x=dataset['test_input'][:, 0], y=KAN_preds[:, 0],
-                    ax=ax[0], s=50, color='red', label='KAN Predictions')
+    sorted_indices_test = np.argsort(dataset['test_input'], axis=0)
+    sorted_indices_all = np.argsort(X, axis=0)
 
-    # Set labels and title
-    ax[0].set_xlabel("Random X 1D Samples", fontsize=12)
-    ax[0].set_ylabel("Function", fontsize=12)
-    ax[0].set_title("Actual Data vs. KAN Predictions", fontsize=14, weight='bold')
+    plot_array_test = torch.gather(dataset['test_input'], dim=0, index=sorted_indices_test)
+    plot_array_pred = torch.gather(KAN_preds, dim=0, index=sorted_indices_test)
 
-    # Add a legend
-    ax[0].legend(title='Legend', fontsize=10, title_fontsize=12)
+    plot_array_x_tot = torch.gather(X, dim=0, index=sorted_indices_all)
+    plot_array_y_tot = torch.gather(y, dim=0, index=sorted_indices_all)
+
+
+    ax[0].plot(plot_array_x_tot, plot_array_y_tot, "o", markersize=1, linestyle='None', label="Data")
+    ax[0].plot(plot_array_test, plot_array_pred, "--",label='KAN predictions')
+    
+
+    ax[0].set_xlabel("Random X 1D samples")
+    ax[0].set_ylabel("Function")
+    ax[0].legend()
+
+
 
     # --- Plot 2: Training and Validation Loss ---
     # Convert loss data to a DataFrame for Seaborn
@@ -121,3 +128,8 @@ def basic_fit(data: pd.DataFrame) -> dict:
     print(f"Elapsed Time: {elapsed_time:.3f} seconds")
 
     return results
+
+
+
+
+
