@@ -1,0 +1,4 @@
+model/*
+*.ipynb_checkpoints
+*.vscode
+KAN/model/*
