@@ -25,54 +25,76 @@ class MLP(nn.Module):
         
         self.layers.append(nn.Linear(i_size, output_size))
         self.layers = nn.Sequential(*self.layers)
+        self.optimizer = optim.Adam(self.parameters(), lr=0.01)  # Adam optimzier. Alternatively: optim.STD (Stochastic Gradient Descent)
+        self.loss_function = nn.MSELoss()  # Mean Squared Error Loss. Alteratively: L1Loss, CrossEntropyLoss
+        self.epoch_list = list()
+        self.loss_list = list()
     
-    def forward(self, input):
+    def forward(self, x):
         return self.layers(x)
 
-# Constants of the network
-input_size = 1
-hidden_sizes = [2, 4, 8]
-output_size = 1
+    def predict(model, new_data):
+        model.eval()  # Set the model to evaluation mode
+    
+        with torch.no_grad():  # Disable gradient calculation for inference
+            outputs = model(new_data)  # Directly return the output for regression
+        
+        return outputs
+    
+    def fit(self, x, y, n_epochs):
+        # Training
 
-# Constants of the data
-n_datapoints = 100  # Number of datapoints
+        for epoch in tqdm(range(1, n_epochs)):
 
-# Generate test data
-# x = torch.rand(n_datapoints, input_size)  # Random floats [0, 1)
-x = torch.randint(-100, 100, (n_datapoints, input_size)).float()  # Random numbers [low, high]
-x = torch.sort(x, dim=0)[0]
-y = polynomial_d2(x, a=1, b=0, c=5)  # To generate y = f(x)
+            self.optimizer.zero_grad()
 
-# Define network
-model = MLP(input_size, hidden_sizes, output_size)  # Create MLP
+            # Forward pass
+            output = self.forward(x)
 
-# Define loss, optimizer
-loss_function = nn.MSELoss()  # Mean Squared Error Loss. Alteratively: L1Loss, CrossEntropyLoss
-optimizer = optim.Adam(model.parameters(), lr=0.01)  # Adam optimzier. Alternatively: optim.STD (Stochastic Gradient Descent)
+            # Compute loss
+            loss = self.loss_function(output, y)
 
-# Training
-n_epochs = 5000
-epoch_list = list()
-loss_list = list()
-for epoch in tqdm(range(1, n_epochs)):
+            # Backward pass
+            loss.backward()
 
-    optimizer.zero_grad()
+            # Optimize model parameters
+            self.optimizer.step()
 
-    # Forward pass
-    output = model(x)
+            # Save data
+            self.epoch_list.append(epoch)
+            self.loss_list.append(loss.item())
 
-    # Compute loss
-    loss = loss_function(output, y)
+def constants():
+    # Constants of the network
+    input_size = 1
+    hidden_sizes = [8,8]
+    output_size = 1
 
-    # Backward pass
-    loss.backward()
+    # Constants of the data
+    n_datapoints = 100  # Number of datapoints
 
-    # Optimize model parameters
-    optimizer.step()
+    n_epochs = 5000
 
-    # Save data
-    epoch_list.append(epoch)
-    loss_list.append(loss.item())
+    # Generate test data
+    # x = torch.rand(n_datapoints, input_size)  # Random floats [0, 1)
+    x = torch.randint(-100, 100, (n_datapoints, input_size)).float()  # Random numbers [low, high]
+    #x = torch.sort(x, dim=0)[0]
+    y = polynomial_d2(x, a=1, b=0, c=5)  # To generate y = f(x)
+
+    model = MLP(input_size, hidden_sizes, output_size)
+    model.fit(x,y,n_epochs)
+
+    #print(model.forward(x[50]).detach())
+    #print(y[50])
+
+    y_approx = model.predict(x)
+    plt.title("y as a function of x")
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.plot(x, y, 'r*', label="datapoints")  # Plots datapoints
+    plt.plot(x, y_approx, 'b*', label="approximation")  # Plots approximated datapoints
+    plt.legend()
+    plt.show()
 
 
 def plot_loss():
@@ -104,8 +126,5 @@ def print_model_parameters():
     for name, param in model.state_dict().items():
         print(f"{name}: {param}")
 
-
-print_model_parameters()
-plot_result()
 
 
