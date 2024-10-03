@@ -1,0 +1,7 @@
+model/*
+*.ipynb_checkpoints
+*.vscode
+KAN/model/*
+*.ipynb_checkpoints/*
+*/__pycache__/*
+figures/*
