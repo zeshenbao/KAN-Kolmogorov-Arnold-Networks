@@ -9,6 +9,7 @@ from kan import *
 import time
 
 
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(device)
 
@@ -22,14 +23,14 @@ def read_data(filepath:str) -> pd.DataFrame:
 
 def basic_fit(data: pd.DataFrame) -> dict:
     # Initialize model and create dataset
-    kan_model = KAN(width=[1, 10, 10, 1], grid=3, k=5, seed=0)
+    kan_model = KAN(width=[1, 20, 20, 1], grid=3, k=5, seed=0)
     X = torch.tensor(data["x"].values).float().unsqueeze(1)
     y = torch.tensor(data["y"].values).float().unsqueeze(1)
     dataset = create_dataset_from_data(X, y)
 
     # Train model
     start = time.time()
-    results = kan_model.fit(dataset, opt="LBFGS", steps=20, lamb=0.001, lamb_entropy=10.)
+    results = kan_model.fit(dataset, opt="LBFGS", steps=200, lamb=0.001, lamb_entropy=10.)
     end = time.time()
     elapsed_time = end - start
 
@@ -76,7 +77,11 @@ def basic_fit(data: pd.DataFrame) -> dict:
 
     ax[0].plot(plot_array_x_tot, plot_array_y_tot, "o", markersize=1, linestyle='None', label="Data")
     ax[0].plot(plot_array_test, plot_array_pred, "--",label='KAN predictions')
+
+    noise_x = np.linspace(-10, 10, 1000)
+    noise_combined = 0.0001*noise_x#np.sin(noise_x) + np.sin(0.2 * noise_x)
     
+    ax[0].plot(noise_x, noise_combined, "-",label='True function')
 
     ax[0].set_xlabel("Random X 1D samples")
     ax[0].set_ylabel("Function")
@@ -132,4 +137,5 @@ def basic_fit(data: pd.DataFrame) -> dict:
 
 
 
-
+data = read_data("./datasets/data_pink_noise_flat.csv")
+basic_fit(data)
