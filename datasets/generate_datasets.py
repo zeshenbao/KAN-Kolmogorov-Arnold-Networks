@@ -38,7 +38,7 @@ y_true = np.sin(xs)
 # add noise to the y-values
 #y_noise = y_true + noise
 
-y_noise = 0.1*coloured_noise_f(xs) + np.sin(xs) 
+y_noise = 0.2*coloured_noise_f(xs) + y_true
 
 
 # create dataset
@@ -51,4 +51,4 @@ data = {
 df = pd.DataFrame(data)
 
 # Convert DataFrame to CSV
-df.to_csv('./datasets/pink2.csv', index=False)
+df.to_csv('./datasets/pink_sin(x).csv', index=False)

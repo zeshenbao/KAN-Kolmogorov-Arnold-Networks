@@ -21,15 +21,28 @@ def read_data(filepath:str) -> pd.DataFrame:
     return pd.read_csv(filepath)
 
 
-def basic_fit(data: pd.DataFrame) -> dict:
+def basic_fit(data: pd.DataFrame, data2) -> dict:
     # Initialize model and create dataset
 
-    kan_model = KAN(width=[1, 5, 5, 1], grid=100, k=2, seed=0)
+    kan_model = KAN(width=[1, 10, 20, 10, 1], grid=3, k=2, seed=0)
 
     X = torch.tensor(data["x"].values).float().unsqueeze(1)
     y_noise = torch.tensor(data["y_noise"].values).float().unsqueeze(1)
     y_true = torch.tensor(data["y_true"].values).float().unsqueeze(1)
-    dataset = create_dataset_from_data(y_noise, y_true, train_ratio=0.9)
+
+    y_comb = torch.cat((X,y_noise), dim=1)
+
+    X2 = torch.tensor(data2["x"].values).float().unsqueeze(1)
+    y_noise2 = torch.tensor(data2["y_noise"].values).float().unsqueeze(1)
+    y_true2 = torch.tensor(data2["y_true"].values).float().unsqueeze(1)
+
+    y_comb2 = torch.cat((X2,y_noise2), dim=1)
+
+    print("X",X.shape)
+    print("y_noise",y_noise.shape)
+    print("y_comb", y_comb.shape)
+
+    dataset = create_dataset_from_data(y_comb, y_true, train_ratio=0.9)
 
     # Train model
     start = time.time()
@@ -38,12 +51,12 @@ def basic_fit(data: pd.DataFrame) -> dict:
     elapsed_time = end - start
 
     # Generate predictions
-    KAN_preds = kan_model(y_noise).detach()
+    KAN_preds = kan_model(y_comb2).detach()
 
     # Debugging: Inspect results
     print("Keys in results:", results.keys())
     print("Train Loss:", results.get('train_loss'))
-    print("Validation/Test Loss:", results.get('test_loss'))
+    print("Validation/Test Loss:", results.get('test_loss'))  
 
     # Verify that 'train_loss' and 'test_loss' are present and are lists
     required_keys = ['train_loss', 'test_loss']
@@ -84,9 +97,10 @@ def basic_fit(data: pd.DataFrame) -> dict:
     print("y_true", y_true.shape)
     print("X", X.shape)
 
-    ax[0].plot(X, y_noise, "o", markersize=1, linestyle='None', label="Data")
-    ax[0].plot(X, KAN_preds, "--",label='KAN predictions')
-    ax[0].plot(X, y_true, "-",label='True function')
+    ax[0].plot(X2, y_noise2, "o", markersize=1, linestyle='None', label="Data")
+    ax[0].plot(X2, y_true2, "-",label='True function')
+    ax[0].plot(X, y_true, "-",label='True trained function')
+    ax[0].plot(X2, KAN_preds, "--",label='KAN predictions')
 
     #noise_x = np.linspace(-10, 10, 1000)
     #noise_combined = 0.0001*noise_x#np.sin(noise_x) + np.sin(0.2 * noise_x)
@@ -120,7 +134,7 @@ def basic_fit(data: pd.DataFrame) -> dict:
 
     # Line plot for training and validation loss
     sns.lineplot(data=loss_melted, x='Epoch', y='Loss', hue='Loss Type',
-                 ax=ax[1], marker='o')
+                 ax=ax[1], marker='.')
 
     # Set labels and title
     ax[1].set_xlabel("Epoch", fontsize=12)
@@ -146,5 +160,6 @@ def basic_fit(data: pd.DataFrame) -> dict:
 
 
 
-data = read_data("./datasets/pink2.csv")
-basic_fit(data)
+data = read_data("./datasets/pink_sin(x).csv")
+data2 = read_data("./datasets/pink_sin(0.5x).csv")
+basic_fit(data, data2)
