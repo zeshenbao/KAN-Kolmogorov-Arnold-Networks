@@ -6,13 +6,12 @@ from noise import *
 def f_1(x):
     return x**2+x
 
-
 # add function 2 here
 def f_2(x):
     return np.sin(x)
 
 def coloured_noise_f(x):
-    return pink_noise(np.sin(x))+pink_noise(np.sin(0.2*x))
+    return pink_noise(x)
 
 def generate_x_values(start_x, end_x, n):
     # create n x values
@@ -21,7 +20,6 @@ def generate_x_values(start_x, end_x, n):
 
 def generate_y_values(xs, func):
     return func(xs)
-
 
 # set amount of datapoints
 n = 1000
@@ -33,22 +31,24 @@ start_x, end_x = -10, 10
 xs = generate_x_values(start_x, end_x, n)
 
 # get y given a function
-ys = generate_y_values(xs, coloured_noise_f)
-
+y_true = np.sin(xs)
 # set noise distribution
-lower_bound, upper_bound = -0.5, 0.5
-noise = np.random.uniform(lower_bound, upper_bound, n)
-
+#lower_bound, upper_bound = -2, 2
+#noise = np.random.uniform(lower_bound, upper_bound, n)
 # add noise to the y-values
-ys_noisy = ys + noise
+#y_noise = y_true + noise
+
+y_noise = 0.1*coloured_noise_f(xs) + np.sin(xs) 
+
 
 # create dataset
 data = {
     'x': xs,
-    'y': ys_noisy
+    'y_noise': y_noise,
+    'y_true': y_true
 }
 
 df = pd.DataFrame(data)
 
 # Convert DataFrame to CSV
-df.to_csv('data_noise.csv', index=False)
+df.to_csv('./datasets/pink2.csv', index=False)
