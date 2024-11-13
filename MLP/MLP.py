@@ -29,6 +29,10 @@ class MLP(nn.Module):
         self.loss_function = nn.MSELoss()  # Mean Squared Error Loss. Alteratively: L1Loss, CrossEntropyLoss
         self.epoch_list = list()
         self.loss_list = list()
+        self.val_loss_list = list()
+        self.validation_x = list()
+        self.validation_y = list()
+
     
     def forward(self, x):
         return self.layers(x)
@@ -45,6 +49,8 @@ class MLP(nn.Module):
         # Training
 
         for epoch in tqdm(range(1, n_epochs)):
+            # Set model to training mode
+            self.train()
 
             self.optimizer.zero_grad()
 
@@ -63,6 +69,17 @@ class MLP(nn.Module):
             # Save data
             self.epoch_list.append(epoch)
             self.loss_list.append(loss.item())
+        
+            self.eval()  # Set the model to evaluation mode
+
+            with torch.no_grad():  # Disable gradient calculation for inference
+                validation_output = self.forward(self.validation_x)
+                validation_loss = self.loss_function(validation_output, self.validation_y)
+                self.val_loss_list.append(validation_loss.item())
+
+    def set_val_data(self, x, y):
+        self.validation_x = x
+        self.validation_y = y
 
 def constants():
     # Constants of the network
