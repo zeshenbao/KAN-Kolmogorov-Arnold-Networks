@@ -21,10 +21,16 @@ def read_data(filepath:str) -> pd.DataFrame:
     return pd.read_csv(filepath)
 
 
-def basic_fit(data: pd.DataFrame, data2) -> dict:
+def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict:
     # Initialize model and create dataset
 
-    kan_model = KAN(width=[1, 5, 5, 5, 1], grid=5, k=3, seed=0)
+    ## Params
+    width = [1, 3, 1]
+    grid = 3
+    k = 3
+    seed = 0
+
+    kan_model = KAN(width=width, grid=grid, k=k, seed=seed)
 
     #X = torch.tensor(data["x"].values).float().unsqueeze(1)
     #y_noise = torch.tensor(data["y_noise"].values).float().unsqueeze(1)
@@ -38,24 +44,49 @@ def basic_fit(data: pd.DataFrame, data2) -> dict:
 
     #y_comb2 = torch.cat((X2,y_noise2), dim=1)
 
-    X = torch.tensor(data['xs']).float().unsqueeze(1)
-    y_noise = torch.tensor(data['y_noise']).float()
-    y_true = torch.tensor(data['y_true']).float().unsqueeze(1)
+    X_tot = torch.tensor(total_data['x']).float().unsqueeze(1)
+    y_true_tot = torch.tensor(total_data['y_true']).float().unsqueeze(1)
 
-    X2 = torch.tensor(data2['xs']).float().unsqueeze(1)
-    y_noise2 = torch.tensor(data2['y_noise']).float()
-    y_true2 = torch.tensor(data2['y_true']).float().unsqueeze(1)
+    X_train = torch.tensor(train_data['x']).float().unsqueeze(1)
+    y_noise_train = torch.tensor(train_data['y_noise']).float().unsqueeze(0)
+    y_true_train = torch.tensor(train_data['y_true']).float().unsqueeze(1)
+
+    X_val = torch.tensor(val_data['x']).float().unsqueeze(1)
+    y_noise_val = torch.tensor(val_data['y_noise']).float().unsqueeze(0)
+    y_true_val = torch.tensor(val_data['y_true']).float().unsqueeze(1)
+
+    X_test = torch.tensor(test_data['x']).float().unsqueeze(1)
+    y_noise_test = torch.tensor(test_data['y_noise']).float().unsqueeze(0)
+    y_true_test = torch.tensor(test_data['y_true']).float().unsqueeze(1)
 
 
-    print("X",X.shape)
-    print("y_noise",y_noise.shape)
+    #print("X",X.shape)
+    print("y_noise_train",y_noise_train.shape)
+    print("y_true_train",y_true_train.shape)
+
+    #print("X",X.shape)
+    #print("y_noise",y_noise.shape)
     #print("y_comb", y_comb.shape)
 
-    dataset = create_dataset_from_data(y_noise.T, y_true, train_ratio=0.9)
+    dataset = {"train_input": y_noise_train.T, "train_label":y_true_train, "test_input":y_noise_test.T, "test_label":y_true_test}
+
+    #print("dataset1",dataset["train_input"].shape)
+    #print("dataset1",dataset["train_label"].shape)
+
+    print("testtest",dataset["test_input"])
+    print("testtest2",dataset["train_input"])
+
 
     # Train model
+    ## Params
+    dataset_input = "y_noise, y_true"
+    opt = "LBFGS"
+    steps = 20
+    lr = 0.01
+    lamb = 1
+
     start = time.time()
-    results = kan_model.fit(dataset, opt="LBFGS", steps=100, lr = 0.01, lamb=10)
+    results = kan_model.fit(dataset, opt=opt, steps=steps, lr = lr , lamb=lamb)
     end = time.time()
     elapsed_time = end - start
     #print("4taetaet", y_noise2.shape)
@@ -102,24 +133,24 @@ def basic_fit(data: pd.DataFrame, data2) -> dict:
     #plot_array_y_true_tot = torch.gather(y_true, dim=0, index=sorted_indices_all)
 
 
-    print("dataset['test_input']", dataset['test_input'].shape)
-    print("y_noise", y_noise.shape)
-    print("y_true", y_true.shape)
-    print("X2", X2.shape)
+    #print("dataset['test_input']", dataset['test_input'].shape)
+    #print("y_noise", y_noise.shape)
+    #print("y_true", y_true.shape)
+    #print("X2", X2.shape)
     
-    print("y_noise2.shape",y_noise2.shape)
+    #print("y_noise2.shape",y_noise2.shape)
 
-    for i in range(10):
-        y_noise2temp = y_noise2[i].unsqueeze(0).T
-        if i == 0:
-            ax[0].plot(X2, y_noise2temp, "o", markersize=1, linestyle='None', label="data")
-        else:
-            ax[0].plot(X2, y_noise2temp, "o", markersize=1, linestyle='None')
+    #for i in range(10):
+    #    y_noise2temp = y_noise2[i].unsqueeze(0).T
+    #    if i == 0:
+    #        ax[0].plot(X2, y_noise2temp, "o", markersize=1, linestyle='None', label="data")
+    #    else:
+    #        ax[0].plot(X2, y_noise2temp, "o", markersize=1, linestyle='None')
 
-
-    ax[0].plot(X2, y_true2, "-",label='True function')
-    ax[0].plot(X, y_true, "-",label='True trained function')
-    ax[0].plot(X2, KAN_preds, "--",label='KAN predictions')
+    ax[0].plot(X_train, y_noise_train.T, "o", markersize=1, linestyle='None', label="train data")
+    ax[0].plot(X_tot, y_true_tot, "-",label='True function')
+    #ax[0].plot(X, y_true, "-",label='True trained function')
+    ax[0].plot(dataset["test_input"], KAN_preds, "o", linestyle='None', label='KAN predictions')
 
     #noise_x = np.linspace(-10, 10, 1000)
     #noise_combined = 0.0001*noise_x#np.sin(noise_x) + np.sin(0.2 * noise_x)
@@ -174,16 +205,40 @@ def basic_fit(data: pd.DataFrame, data2) -> dict:
 
     print(f"Elapsed Time: {elapsed_time:.3f} seconds")
 
+
+    folder_name = "result1"
+    os.makedirs(f'./KAN/results/{folder_name}', exist_ok=True)
+    file_path = f'./KAN/results/{folder_name}/model_params.txt'
+
+    with open(file_path, "w") as file:
+        file.write(f"input to model: {dataset_input}\n")
+        file.write(f"width: {width}\n")
+        file.write(f"grid: {grid}\n")
+        file.write(f"k: {k}\n")
+        file.write(f"seed: {seed}\n")
+        file.write(f"opt: {opt}\n")
+        file.write(f"steps: {steps}\n")
+        file.write(f"lr: {lr}\n")
+        file.write(f"lamb: {lamb}\n")
+
+        
+
     return results
 
 
 
+import_data_folder = "pink_sin_test2"
+
+train_data = read_data(f"./datasets/{import_data_folder}/train_data.csv")
+val_data = read_data(f"./datasets/{import_data_folder}/validation_data.csv")
+test_data = read_data(f"./datasets/{import_data_folder}/test_data.csv")
+total_data = read_data(f"./datasets/{import_data_folder}/true_data.csv")
 
 #data = read_data("./datasets/pink_sin(x)_stack.csv")
 #data2 = read_data("./datasets/pink_sin(0.5x)_stack.csv")
 
 
-data = np.load('./datasets/data_3sin(x)_1.npz', allow_pickle=True)
-data2 = np.load('./datasets/data_sin(0.5x)_1.npz', allow_pickle=True)
+#data = np.load('./datasets/data_3sin(x)_1.npz', allow_pickle=True)
+#data2 = np.load('./datasets/data_sin(0.5x)_1.npz', allow_pickle=True)
 
-basic_fit(data, data2)
+basic_fit(train_data=train_data, val_data=val_data, test_data=test_data, total_data=total_data)

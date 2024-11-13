@@ -27,6 +27,10 @@ def basic_fit(data: pd.DataFrame) -> dict:
     X = torch.tensor(data["x"].values).float().unsqueeze(1)
     y = torch.tensor(data["y"].values).float().unsqueeze(1)
     dataset = create_dataset_from_data(X, y)
+    
+    print(dataset["train_input"].shape)
+    print(dataset["train_label"].shape)
+
 
     # Train model
     start = time.time()

@@ -47,6 +47,7 @@ xs = generate_x_values(start_x, end_x, n_datapoints)
 
 # get y given a function
 y_true = np.sin(xs)
+func_name = "np.sin(x)"
 # set noise distribution
 #lower_bound, upper_bound = -2, 2
 #noise = np.random.uniform(lower_bound, upper_bound, n)
@@ -60,6 +61,7 @@ y_true = np.sin(xs)
 #SNR = mean/mean
 
 y_noise = 0.2*coloured_noise_f(xs) + y_true
+noise_name = "pink noise"
 snr, snr_db = calculate_snr(y_true, y_noise)
 
 #y_noise_tot = np.vstack(noise_list)
@@ -77,7 +79,7 @@ df = pd.DataFrame(data)
 
 
 # Split data (80% training, 10% validation, 10% testing)
-train_df, test_val_df = train_test_split(df, test_size=0.3, random_state=42)
+train_df, test_val_df = train_test_split(df, test_size=0.2, random_state=42)
 validation_df, test_df = train_test_split(test_val_df, test_size=0.5, random_state=42)
 
 
@@ -98,6 +100,7 @@ folder_name = "pink_sin_test2"
 os.makedirs(f'./datasets/{folder_name}', exist_ok=True)
 
 # Save training and test sets to CSV files
+df.to_csv(f'./datasets/{folder_name}/true_data.csv', index=False)
 train_df.to_csv(f'./datasets/{folder_name}/train_data.csv', index=False)
 validation_df.to_csv(f'./datasets/{folder_name}/validation_data.csv', index=False)
 test_df.to_csv(f'./datasets/{folder_name}/test_data.csv', index=False)
@@ -110,7 +113,9 @@ with open(file_path, "w") as file:
     file.write(f"n_datapoints: {n_datapoints}\n")
     file.write(f"start_x, end_x: {start_x, end_x }\n")
     file.write(f"snr, snr_db: {snr, snr_db}\n")
-    file.write(f"")
+    file.write(f"function name: {func_name}\n")
+    file.write(f"noise:{noise_name}")
+
 
 
 #np.savez('./datasets/data_3sin(0.5x)_1.npz', xs=xs, y_true=y_true, y_noise=noise_list)
