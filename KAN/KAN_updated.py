@@ -87,7 +87,7 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
     ## Params
     dataset_input = "y_noise, y_true"
     opt = "LBFGS"
-    steps = 100
+    steps = 10
     lr = 0.01
     lamb = 0.0
 
@@ -166,12 +166,16 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
     ax[0].plot(X_tot, y_true_tot, "-",label='True function')
     #ax[0].plot(X, y_true, "-",label='True trained function')
 
+    
     sorted_X, indices = torch.sort(X_val, dim = 0)
     #print("indicies",indices.shape)
 
     sorted_KAN_preds = KAN_preds[indices][:,:,0]
     #print("sorted_KAN_preds",sorted_KAN_preds.shape)
     ax[0].plot(sorted_X, sorted_KAN_preds, "--", label='KAN predictions')
+
+
+    
 
     #noise_x = np.linspace(-10, 10, 1000)
     #noise_combined = 0.0001*noise_x#np.sin(noise_x) + np.sin(0.2 * noise_x)
@@ -225,7 +229,6 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
 
     print(f"Elapsed Time: {elapsed_time:.3f} seconds")
 
-
     print(loss_df['Validation Loss'].iloc[-1])
 
     folder_name = "result3"
@@ -247,9 +250,9 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
         file.write(f"final training loss: {loss_df['Train Loss'].iloc[-1]}\n")
         #file.write(f"final validation loss: {}\n")
         
+    
+    np.savez(f'./KAN/results/{folder_name}/plots.npz', epoch=range(1, len(results['train_loss']) + 1), train_loss = results['train_loss'], val_loss = results['test_loss'] , X_train = X_train, y_noise_train = y_noise_train, X_tot = X_tot, y_true_tot = y_true_tot, sorted_X = sorted_X, sorted_KAN_preds = sorted_KAN_preds)
         
-        
-
     return results
 
 
@@ -272,4 +275,62 @@ total_data = read_data(f"./datasets/{import_data_folder}/true_data.csv")
 #data = np.load('./datasets/data_3sin(x)_1.npz', allow_pickle=True)
 #data2 = np.load('./datasets/data_sin(0.5x)_1.npz', allow_pickle=True)
 
-basic_fit(train_data=train_data, val_data=val_data, test_data=test_data, total_data=total_data)
+#basic_fit(train_data=train_data, val_data=val_data, test_data=test_data, total_data=total_data)
+
+
+data = np.load("./KAN/results/result3/plots.npz", allow_pickle=True)
+print(data["X_train"].shape)
+print(data["y_noise_train"].shape)
+print(data["sorted_KAN_preds"].shape)
+print(data["epoch"].shape)
+print(data["train_loss"].shape)
+print(data["val_loss"].shape)
+
+
+
+loss_df = pd.DataFrame({
+        'Epoch': data["epoch"],
+        'Train Loss': data["train_loss"],
+        'Validation Loss': data["val_loss"]})
+
+loss_melted = loss_df.melt(id_vars='Epoch', var_name='Loss Type', value_name='Loss')
+
+sns.set_theme(style="whitegrid")
+
+fig, ax = plt.subplots(1, 2, figsize=(16, 6))
+
+ax[0].plot(data["X_train"], data["y_noise_train"], marker='o', markersize=1, linestyle='None', label="train data")
+ax[0].plot(data["X_tot"], data["y_true_tot"], linestyle='-',label='True function')
+
+sorted_X = data["sorted_X"]
+sorted_KAN_preds = data["sorted_KAN_preds"]
+
+
+#print("sorted_KAN_preds",sorted_KAN_preds.shape)
+ax[0].plot(sorted_X, sorted_KAN_preds, "--", label='KAN predictions')
+
+ax[0].set_xlabel("Random X 1D samples")
+ax[0].set_ylabel("Function")
+ax[0].legend()
+
+
+
+sns.lineplot(data=loss_melted, x='Epoch', y='Loss', hue='Loss Type',
+                 ax=ax[1], marker='.')
+
+# Set labels and title
+ax[1].set_xlabel("Epoch", fontsize=12)
+ax[1].set_ylabel("Loss", fontsize=12)
+ax[1].set_title("Training and Validation Loss Over Epochs", fontsize=14, weight='bold')
+
+# Customize legend
+ax[1].legend(title='Loss Type', fontsize=10, title_fontsize=12)
+
+# Adjust layout for better spacing
+plt.tight_layout()
+
+# Optional: Save the figure with high resolution
+# plt.savefig('enhanced_plots.png', dpi=300)
+
+# Display the plots
+plt.show()

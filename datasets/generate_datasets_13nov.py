@@ -78,9 +78,9 @@ df = pd.DataFrame(data)
 ### split data
 
 
-# Split data (80% training, 10% validation, 10% testing)
-train_df, test_val_df = train_test_split(df, test_size=0.66666666, random_state=42)
-validation_df, test_df = train_test_split(test_val_df, test_size=0.5, random_state=42)
+# Split data (70% training, 20% validation, 10% testing)
+train_df, test_val_df = train_test_split(df, test_size=0.3, random_state=42)
+validation_df, test_df = train_test_split(test_val_df, test_size=1/3, random_state=42)
 
 
 # Convert DataFrame to CSV
