@@ -37,7 +37,7 @@ def calculate_snr(y_true, y_noise): ### write own code later
     return snr, snr_db
 
 # set amount of datapoints
-n_datapoints = 1000
+n_datapoints = 1000 ## TODO: set datapoints
 
 # set startpoint and endpoint
 start_x, end_x = -10, 10
@@ -46,16 +46,14 @@ start_x, end_x = -10, 10
 xs = generate_x_values(start_x, end_x, n_datapoints)
 
 # get y given a function
-y_true = np.sin(xs) 
-func_name = "np.sin(x)" ## TODO: write function name for saving params for dataset
+y_true = np.sin(xs) ## TODO: choose function
+func_name = "sin(x)" ## TODO: write function name for saving params for dataset
 # set noise distribution
 
 ### TODO: uncomment to generate gaussian noise (Hampus previous code part)
 #lower_bound, upper_bound = -2, 2
 #noise_gaussian = np.random.uniform(lower_bound, upper_bound, n)
 # add noise to the y-values
-
-
 
 ### Räkna SNR 
 y_noise = 0.2*coloured_noise_f(xs) + y_true  ### TODO: change first term to noise_gaussian if you want gaussian noise
@@ -85,7 +83,7 @@ print(validation_df.head())
 
 
 # Create folder
-folder_name = "pink_sin_test5" #folder name for saving dataset
+folder_name = "pink_sin_test5" #folder name for saving dataset  ## TODO: set folder name
 os.makedirs(f'./datasets/{folder_name}', exist_ok=True)
 
 # Save training and test sets to CSV files

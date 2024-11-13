@@ -22,11 +22,12 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
     # Initialize model and create dataset
 
     ## Params ## TODO: Choose architecture + choose save folder name
-    width = [1, 3, 3, 1] #width for each layer
-    grid = 5 # nr of spline grids
+    width = [1, 3, 1] #width for each layer
+    grid = 3  # nr of spline grids
     k = 3 #order of spline
     seed = 0 #random seed
     folder_name = "result5" #save folder name, one for each model run
+    os.makedirs(f'./KAN/results/{folder_name}', exist_ok=True)
 
     kan_model = KAN(width=width, grid=grid, k=k, seed=seed)
 
@@ -56,7 +57,7 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
     ## Params ## TODO: can change params, only steps for friday 14 nov
     dataset_input = "y_noise, y_true"
     opt = "LBFGS"
-    steps = 10
+    steps = 100
     lr = 0.01
     lamb = 0.0
     
@@ -90,23 +91,28 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
     sns.set_theme(style="whitegrid")
 
     # Create a figure with two subplots side by side
-    fig, ax = plt.subplots(1, 2, figsize=(16, 6))
+    #fig, ax = plt.subplots(1, 2, figsize=(16, 6))
 
     # --- Plot 1: Data and Predictions ---
     print("Test Input Shape:", dataset['test_input'].shape)
     print("Test Label Shape:", dataset['test_label'].shape)
     print("KAN Predictions Shape:", KAN_preds.shape)
 
-    ax[0].plot(X_train, y_noise_train, "o", markersize=1, linestyle='None', label="train data")
-    ax[0].plot(X_tot, y_true_tot, "-",label='True function')
+    plt.plot(X_val, y_noise_val, "o", markersize=1, linestyle='None', label="Validation data")
+    plt.plot(X_tot, y_true_tot, "-",label='True function')
 
     sorted_X, indices = torch.sort(X_val, dim = 0)
     sorted_KAN_preds = KAN_preds[indices][:,:,0]
-    ax[0].plot(sorted_X, sorted_KAN_preds, "--", label='KAN predictions')
-    ax[0].set_xlabel("Random X 1D samples")
-    ax[0].set_ylabel("Function")
-    ax[0].legend()
+    plt.plot(sorted_X, sorted_KAN_preds, "--", label='KAN predictions')
+    plt.xlabel("Random X 1D samples")
+    plt.ylabel("Function")
+    plt.legend()
+    plt.title("Prediction using KAN", fontsize=14, weight='bold')
 
+    plt.tight_layout()
+    plt.savefig(f'./KAN/results/{folder_name}/plot.png', dpi=300)
+
+    plt.clf()
 
     # --- Plot 2: Training and Validation Loss ---
     # Convert loss data to a DataFrame for Seaborn
@@ -129,32 +135,36 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
     print(loss_melted.head())
 
     # Line plot for training and validation loss
-    sns.lineplot(data=loss_melted, x='Epoch', y='Loss', hue='Loss Type',
-                 ax=ax[1], marker='.')
+    sns.lineplot(data=loss_melted, x='Epoch', y='Loss', hue='Loss Type', marker='.')
 
     # Set labels and title
-    ax[1].set_xlabel("Epoch", fontsize=12)
-    ax[1].set_ylabel("Loss", fontsize=12)
-    ax[1].set_title("Training and Validation Loss Over Epochs", fontsize=14, weight='bold')
+    plt.xlabel("Epoch", fontsize=12)
+    plt.ylabel("Loss", fontsize=12)
+    plt.title("Training and Validation Loss Over Epochs", fontsize=14, weight='bold')
 
     # Customize legend
-    ax[1].legend(title='Loss Type', fontsize=10, title_fontsize=12)
+    plt.legend(title='Loss Type', fontsize=10, title_fontsize=12)
 
     # Adjust layout for better spacing
     plt.tight_layout()
 
-    # Optional: Save the figure with high resolution
-    # plt.savefig('enhanced_plots.png', dpi=300)
+    
+
+    plt.savefig(f'./KAN/results/{folder_name}/loss.png', dpi=300)
+    # Optional: Save the figure with high resolution 
+    
+
+
 
     # Display the plots
-    plt.show()
+    #plt.show()
 
     print(f"Elapsed Time: {elapsed_time:.3f} seconds")
 
     print(loss_df['Validation Loss'].iloc[-1])
 
     
-    os.makedirs(f'./KAN/results/{folder_name}', exist_ok=True)
+    
     file_path = f'./KAN/results/{folder_name}/model_params.txt'
 
     with open(file_path, "w") as file:
