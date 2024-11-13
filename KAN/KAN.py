@@ -34,7 +34,7 @@ def basic_fit(data: pd.DataFrame) -> dict:
 
     # Train model
     start = time.time()
-    results = kan_model.fit(dataset, opt="LBFGS", steps=200, lamb=0.001, lamb_entropy=10.)
+    results = kan_model.fit(dataset, opt="LBFGS", steps=10, lamb=0.001, lamb_entropy=10.)
     end = time.time()
     elapsed_time = end - start
 

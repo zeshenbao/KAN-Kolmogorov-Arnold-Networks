@@ -62,3 +62,4 @@ for i in range(10):
 #df.to_csv('./datasets/pink_sin(x)_stack.csv', index=False)
 
 np.savez('./datasets/data_3sin(0.5x)_1.npz', xs=xs, y_true=y_true, y_noise=noise_list)
+

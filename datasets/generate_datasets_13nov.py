@@ -37,7 +37,7 @@ def calculate_snr(y_true, y_noise): ### write own code later
     return snr, snr_db
 
 # set amount of datapoints
-n_datapoints = 1000
+n_datapoints = 100
 
 # set startpoint and endpoint
 start_x, end_x = -10, 10
@@ -96,7 +96,7 @@ print(validation_df.head())
 ### skapa folder ./datasets/pink_sin(x)
 
 # Create folder
-folder_name = "pink_sin_test2"
+folder_name = "pink_sin_test4"
 os.makedirs(f'./datasets/{folder_name}', exist_ok=True)
 
 # Save training and test sets to CSV files

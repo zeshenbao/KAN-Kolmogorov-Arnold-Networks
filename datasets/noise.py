@@ -24,7 +24,6 @@ def noise_psd(N, psd = lambda f: 1):
         #X_white = np.fft.rfft(np.random.randn(N_len))
         S = psd(np.fft.rfftfreq(n))
 
-        
         # Normalize S
         S = S / np.sqrt(np.mean(S**2))
         X_shaped = X_white * S;
