@@ -56,25 +56,23 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
     y_noise_val = torch.tensor(val_data['y_noise']).float().unsqueeze(1)
     y_true_val = torch.tensor(val_data['y_true']).float().unsqueeze(1)
 
-    X_test = torch.tensor(test_data['x']).float().unsqueeze(1)
-    y_noise_test = torch.tensor(test_data['y_noise']).float().unsqueeze(1)
-    y_true_test = torch.tensor(test_data['y_true']).float().unsqueeze(1)
-
-    
+    #X_test = torch.tensor(test_data['x']).float().unsqueeze(1)
+    #y_noise_test = torch.tensor(test_data['y_noise']).float().unsqueeze(1)
+    #y_true_test = torch.tensor(test_data['y_true']).float().unsqueeze(1)
 
     #print("X",X.shape)
-    print("y_noise_train",y_noise_train.shape)
-    print("y_true_train",y_true_train.shape)
+    #print("y_noise_train",y_noise_train.shape)
+    #print("y_true_train",y_true_train.shape)
 
 
-    print("y_noise_test",y_noise_test.shape)
-    print("y_true_test",y_true_test.shape)
+    #print("y_noise_test",y_noise_test.shape)
+    #print("y_true_test",y_true_test.shape)
 
     #print("X",X.shape)
     #print("y_noise",y_noise.shape)
     #print("y_comb", y_comb.shape)
 
-    dataset = {"train_input": y_noise_train, "train_label":y_true_train, "test_input":y_noise_test, "test_label":y_true_test}
+    dataset = {"train_input": y_noise_train, "train_label":y_true_train, "test_input":y_noise_val, "test_label":y_true_val}
 
     #dataset = create_dataset_from_data(X_tot, y_true_tot)
 
@@ -89,12 +87,21 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
     ## Params
     dataset_input = "y_noise, y_true"
     opt = "LBFGS"
-    steps = 50
+    steps = 100
     lr = 0.01
     lamb = 0.0
 
     start = time.time()
     results = kan_model.fit(dataset, opt=opt, steps=steps, lr = lr , lamb = lamb)
+
+    
+    #results["train_loss"] = np.array(results["train_loss"])
+    #results["train_loss"] = results["train_loss"]#/results["train_loss"].shape[0]
+    #results["test_loss"] = np.array(results["test_loss"])
+    #results["test_loss"] = results["test_loss"]#/results["test_loss"].shape[0]
+
+    #print("shape loss",results["train_loss"].shape[0])
+
     end = time.time()
     elapsed_time = end - start
     #print("4taetaet", y_noise2.shape)
@@ -159,7 +166,7 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
     ax[0].plot(X_tot, y_true_tot, "-",label='True function')
     #ax[0].plot(X, y_true, "-",label='True trained function')
 
-    sorted_X, indices = torch.sort(X_test, dim = 0)
+    sorted_X, indices = torch.sort(X_val, dim = 0)
     #print("indicies",indices.shape)
 
     sorted_KAN_preds = KAN_preds[indices][:,:,0]
@@ -175,7 +182,6 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
     ax[0].legend()
 
 
-
     # --- Plot 2: Training and Validation Loss ---
     # Convert loss data to a DataFrame for Seaborn
     loss_df = pd.DataFrame({
@@ -188,7 +194,7 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
     loss_df['Epoch'] = loss_df['Epoch'].astype(int)
     loss_df['Train Loss'] = loss_df['Train Loss'].astype(float)
     loss_df['Validation Loss'] = loss_df['Validation Loss'].astype(float)
-
+    
     # Melt the DataFrame for easier plotting with Seaborn
     loss_melted = loss_df.melt(id_vars='Epoch', var_name='Loss Type', value_name='Loss')
 
@@ -220,7 +226,10 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
     print(f"Elapsed Time: {elapsed_time:.3f} seconds")
 
 
-    folder_name = "result1"
+    print(loss_df['Validation Loss'].iloc[-1])
+
+    folder_name = "result3"
+    
     os.makedirs(f'./KAN/results/{folder_name}', exist_ok=True)
     file_path = f'./KAN/results/{folder_name}/model_params.txt'
 
@@ -234,14 +243,18 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
         file.write(f"steps: {steps}\n")
         file.write(f"lr: {lr}\n")
         file.write(f"lamb: {lamb}\n")
-
+        file.write(f"final validation loss: {loss_df['Validation Loss'].iloc[-1]}\n")
+        file.write(f"final training loss: {loss_df['Train Loss'].iloc[-1]}\n")
+        #file.write(f"final validation loss: {}\n")
+        
+        
         
 
     return results
 
 
 
-import_data_folder = "pink_sin_test2"
+import_data_folder = "pink_sin_test5"
 
 train_data = read_data(f"./datasets/{import_data_folder}/train_data.csv")
 val_data = read_data(f"./datasets/{import_data_folder}/validation_data.csv")

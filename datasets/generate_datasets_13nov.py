@@ -37,7 +37,7 @@ def calculate_snr(y_true, y_noise): ### write own code later
     return snr, snr_db
 
 # set amount of datapoints
-n_datapoints = 100
+n_datapoints = 1000
 
 # set startpoint and endpoint
 start_x, end_x = -10, 10
@@ -54,8 +54,8 @@ func_name = "np.sin(x)"
 # add noise to the y-values
 #y_noise = y_true + noise
 
-### Räkna SNR 
 
+### Räkna SNR 
 #mean(coloured_noise_f(xs))
 #mean(y_true)
 #SNR = mean/mean
@@ -79,7 +79,7 @@ df = pd.DataFrame(data)
 
 
 # Split data (80% training, 10% validation, 10% testing)
-train_df, test_val_df = train_test_split(df, test_size=0.2, random_state=42)
+train_df, test_val_df = train_test_split(df, test_size=0.66666666, random_state=42)
 validation_df, test_df = train_test_split(test_val_df, test_size=0.5, random_state=42)
 
 
@@ -96,7 +96,7 @@ print(validation_df.head())
 ### skapa folder ./datasets/pink_sin(x)
 
 # Create folder
-folder_name = "pink_sin_test4"
+folder_name = "pink_sin_test5"
 os.makedirs(f'./datasets/{folder_name}', exist_ok=True)
 
 # Save training and test sets to CSV files
