@@ -3,6 +3,7 @@ import pandas as pd
 from noise import *
 import random
 import os 
+from sklearn.model_selection import train_test_split  # Import train_test_split
 
 # function 1
 def f_1(x):
@@ -34,53 +35,36 @@ xs = generate_x_values(start_x, end_x, n_datapoints)
 
 # get y given a function
 y_true = np.sin(xs)
-# set noise distribution
-#lower_bound, upper_bound = -2, 2
-#noise = np.random.uniform(lower_bound, upper_bound, n)
+
 # add noise to the y-values
-#y_noise = y_true + noise
-
-
-
-### Räkna SNR 
-
-#mean(coloured_noise_f(xs))
-#mean(y_true)
-#SNR = mean/mean
-
 y_noise = coloured_noise_f(xs) + y_true
 
-
-#y_noise_tot = np.vstack(noise_list)
-#print(y_noise.shape)
-#print(y_noise_tot.shape)
-
 # create dataset
-#noise_list is list of 10 elements, each element (1000,) array
 data = {'x': xs,'y_noise': y_noise, 'y_true': y_true}
-
 df = pd.DataFrame(data)
 
-### split data
+### Split data into training and test sets
+from sklearn.model_selection import train_test_split
 
+# Split data (80% training, 20% testing)
+train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
 
-# Convert DataFrame to CSV
+print(train_df.head())
+print("------------")
+print(test_df.head())
 
-### skapa folder ./datasets/pink_sin(x)
+exit()
+
+# Create folder
 folder_name = "pink_sin_test"
-
 os.makedirs(f'./datasets/{folder_name}', exist_ok=True)
 
-df.to_csv(f'./datasets/{folder_name}/data.csv', index=False) 
+# Save training and test sets to CSV files
+train_df.to_csv(f'./datasets/{folder_name}/train_data.csv', index=False)
+test_df.to_csv(f'./datasets/{folder_name}/test_data.csv', index=False)
 
+# Save parameters to a text file
 file_path = f'./datasets/{folder_name}/params.txt'
-
 with open(file_path, "w") as file:
     file.write(f"n_datapoints: {n_datapoints}\n")
-    file.write(f"start_x, end_x: {start_x, end_x }\n")
-    file.write("")
-    file.write("")
-
-
-#np.savez('./datasets/data_3sin(0.5x)_1.npz', xs=xs, y_true=y_true, y_noise=noise_list)
-
+    file.write(f"start_x, end_x: {start_x, end_x}\n")
