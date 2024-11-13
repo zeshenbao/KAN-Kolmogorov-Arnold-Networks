@@ -24,39 +24,49 @@ def read_data(filepath:str) -> pd.DataFrame:
 def basic_fit(data: pd.DataFrame, data2) -> dict:
     # Initialize model and create dataset
 
-    kan_model = KAN(width=[1, 10, 20, 10, 1], grid=3, k=2, seed=0)
+    kan_model = KAN(width=[1, 5, 5, 5, 1], grid=5, k=3, seed=0)
 
-    X = torch.tensor(data["x"].values).float().unsqueeze(1)
-    y_noise = torch.tensor(data["y_noise"].values).float().unsqueeze(1)
-    y_true = torch.tensor(data["y_true"].values).float().unsqueeze(1)
+    #X = torch.tensor(data["x"].values).float().unsqueeze(1)
+    #y_noise = torch.tensor(data["y_noise"].values).float().unsqueeze(1)
+    #y_true = torch.tensor(data["y_true"].values).float().unsqueeze(1)
 
-    y_comb = torch.cat((X,y_noise), dim=1)
+    #y_comb = torch.cat((X,y_noise), dim=1)
 
-    X2 = torch.tensor(data2["x"].values).float().unsqueeze(1)
-    y_noise2 = torch.tensor(data2["y_noise"].values).float().unsqueeze(1)
-    y_true2 = torch.tensor(data2["y_true"].values).float().unsqueeze(1)
+    #X2 = torch.tensor(data2["x"].values).float().unsqueeze(1)
+    #y_noise2 = torch.tensor(data2["y_noise"].values).float().unsqueeze(1)
+    #y_true2 = torch.tensor(data2["y_true"].values).float().unsqueeze(1)
 
-    y_comb2 = torch.cat((X2,y_noise2), dim=1)
+    #y_comb2 = torch.cat((X2,y_noise2), dim=1)
+
+    X = torch.tensor(data['xs']).float().unsqueeze(1)
+    y_noise = torch.tensor(data['y_noise']).float()
+    y_true = torch.tensor(data['y_true']).float().unsqueeze(1)
+
+    X2 = torch.tensor(data2['xs']).float().unsqueeze(1)
+    y_noise2 = torch.tensor(data2['y_noise']).float()
+    y_true2 = torch.tensor(data2['y_true']).float().unsqueeze(1)
+
 
     print("X",X.shape)
     print("y_noise",y_noise.shape)
-    print("y_comb", y_comb.shape)
+    #print("y_comb", y_comb.shape)
 
-    dataset = create_dataset_from_data(y_comb, y_true, train_ratio=0.9)
+    dataset = create_dataset_from_data(y_noise.T, y_true, train_ratio=0.9)
 
     # Train model
     start = time.time()
-    results = kan_model.fit(dataset, opt="LBFGS", steps=100, lr = 0.01)
+    results = kan_model.fit(dataset, opt="LBFGS", steps=100, lr = 0.01, lamb=10)
     end = time.time()
     elapsed_time = end - start
-
+    #print("4taetaet", y_noise2.shape)
     # Generate predictions
-    KAN_preds = kan_model(y_comb2).detach()
+    KAN_preds = kan_model(dataset["test_input"]).detach()
 
+    print("KAN_preds",KAN_preds.shape)
     # Debugging: Inspect results
     print("Keys in results:", results.keys())
-    print("Train Loss:", results.get('train_loss'))
-    print("Validation/Test Loss:", results.get('test_loss'))  
+    #print("Train Loss:", results.get('train_loss'))
+    #print("Validation/Test Loss:", results.get('test_loss'))  
 
     # Verify that 'train_loss' and 'test_loss' are present and are lists
     required_keys = ['train_loss', 'test_loss']
@@ -95,9 +105,18 @@ def basic_fit(data: pd.DataFrame, data2) -> dict:
     print("dataset['test_input']", dataset['test_input'].shape)
     print("y_noise", y_noise.shape)
     print("y_true", y_true.shape)
-    print("X", X.shape)
+    print("X2", X2.shape)
+    
+    print("y_noise2.shape",y_noise2.shape)
 
-    ax[0].plot(X2, y_noise2, "o", markersize=1, linestyle='None', label="Data")
+    for i in range(10):
+        y_noise2temp = y_noise2[i].unsqueeze(0).T
+        if i == 0:
+            ax[0].plot(X2, y_noise2temp, "o", markersize=1, linestyle='None', label="data")
+        else:
+            ax[0].plot(X2, y_noise2temp, "o", markersize=1, linestyle='None')
+
+
     ax[0].plot(X2, y_true2, "-",label='True function')
     ax[0].plot(X, y_true, "-",label='True trained function')
     ax[0].plot(X2, KAN_preds, "--",label='KAN predictions')
@@ -160,6 +179,11 @@ def basic_fit(data: pd.DataFrame, data2) -> dict:
 
 
 
-data = read_data("./datasets/pink_sin(x).csv")
-data2 = read_data("./datasets/pink_sin(0.5x).csv")
+#data = read_data("./datasets/pink_sin(x)_stack.csv")
+#data2 = read_data("./datasets/pink_sin(0.5x)_stack.csv")
+
+
+data = np.load('./datasets/data_3sin(x)_1.npz', allow_pickle=True)
+data2 = np.load('./datasets/data_sin(0.5x)_1.npz', allow_pickle=True)
+
 basic_fit(data, data2)
