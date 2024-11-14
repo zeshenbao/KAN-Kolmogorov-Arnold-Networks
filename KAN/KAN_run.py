@@ -22,7 +22,7 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
     # Initialize model and create dataset
 
     ## Params ## TODO: Choose architecture + choose save folder name
-    width = [1, 3, 1] #width for each layer
+    width = [1, 3, 3, 3, 1] #width for each layer
     grid = 3  # nr of spline grids
     k = 3 #order of spline
     seed = 0 #random seed
