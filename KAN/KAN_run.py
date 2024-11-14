@@ -100,7 +100,7 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
 
     plt.plot(X_val, y_noise_val, "o", markersize=1, linestyle='None', label="Validation data")
     plt.plot(X_tot, y_true_tot, "-",label='True function')
-
+    
     sorted_X, indices = torch.sort(X_val, dim = 0)
     sorted_KAN_preds = KAN_preds[indices][:,:,0]
     plt.plot(sorted_X, sorted_KAN_preds, "--", label='KAN predictions')
@@ -154,8 +154,6 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
     # Optional: Save the figure with high resolution 
     
 
-
-
     # Display the plots
     #plt.show()
 
@@ -180,7 +178,8 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
         file.write(f"final validation loss: {loss_df['Validation Loss'].iloc[-1]}\n")
         file.write(f"final training loss: {loss_df['Train Loss'].iloc[-1]}\n")
             
-    np.savez(f'./KAN/results/{folder_name}/plots.npz', epoch=range(1, len(results['train_loss']) + 1), train_loss = results['train_loss'], val_loss = results['test_loss'] , X_train = X_train, y_noise_train = y_noise_train, X_tot = X_tot, y_true_tot = y_true_tot, sorted_X = sorted_X, sorted_KAN_preds = sorted_KAN_preds)
+    
+    np.savez(f'./KAN/results/{folder_name}/plots.npz', epoch=range(1, len(results['train_loss']) + 1), train_loss = results['train_loss'], val_loss = results['test_loss'] , X_val=X_val, y_noise_val=y_noise_val , X_tot = X_tot, y_true_tot = y_true_tot, sorted_X = sorted_X, sorted_KAN_preds = sorted_KAN_preds)
         
     return results
 
