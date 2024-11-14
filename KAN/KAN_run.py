@@ -22,11 +22,11 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
     # Initialize model and create dataset
 
     ## Params ## TODO: Choose architecture + choose save folder name
-    width = [1, 3, 3, 3, 1] #width for each layer
+    width = [1, 7, 1] #width for each layer
     grid = 3  # nr of spline grids
     k = 3 #order of spline
     seed = 0 #random seed
-    folder_name = f'uniform_sin(x)_{width}_241114' #save folder name, one for each model run
+    folder_name = f'uniform_x_sq_{width}_241114' #save folder name, one for each model run
     os.makedirs(f'./KAN/results/{folder_name}', exist_ok=True)
 
     kan_model = KAN(width=width, grid=grid, k=k, seed=seed)
@@ -187,7 +187,7 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
 #### Main():
 
 ### Import dataset
-import_data_folder = "uniform_sin(x)_241114"  ## TODO: select dataset
+import_data_folder = "uniform_x_sq_241114"  ## TODO: select dataset
 
 train_data = read_data(f"./datasets/{import_data_folder}/train_data.csv")
 val_data = read_data(f"./datasets/{import_data_folder}/validation_data.csv")

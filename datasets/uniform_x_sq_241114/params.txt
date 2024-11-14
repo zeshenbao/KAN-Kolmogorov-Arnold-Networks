@@ -1,0 +1,5 @@
+n_datapoints: 1000
+start_x, end_x: (-10, 10)
+snr, snr_db: (62.91679535330624, 17.98766593865118)
+function name: x_sq
+noise:uniform noise

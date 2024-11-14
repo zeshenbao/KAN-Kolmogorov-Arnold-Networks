@@ -46,12 +46,12 @@ start_x, end_x = -10, 10
 xs = generate_x_values(start_x, end_x, n_datapoints)
 
 # get y given a function
-y_true = np.sin(xs) ## TODO: choose function
-func_name = "sin(x)" ## TODO: write function name for saving params for dataset
+y_true = xs**2 ## TODO: choose function
+func_name = "x_sq" ## TODO: write function name for saving params for dataset
 # set noise distribution
 
 ### TODO: uncomment to generate noise (Hampus previous code part)
-lower_bound, upper_bound = -1, 1
+lower_bound, upper_bound = -10, 10
 noise_uniform = np.random.uniform(lower_bound, upper_bound, n_datapoints)
 # add noise to the y-values
 
@@ -84,7 +84,7 @@ print(validation_df.head())
 
 
 # Create folder
-folder_name = "uniform_sin(x)_241114" #folder name for saving dataset  ## TODO: set folder name
+folder_name = "uniform_x_sq_241114" #folder name for saving dataset  ## TODO: set folder name
 os.makedirs(f'./datasets/{folder_name}', exist_ok=True)
 
 # Save training and test sets to CSV files
