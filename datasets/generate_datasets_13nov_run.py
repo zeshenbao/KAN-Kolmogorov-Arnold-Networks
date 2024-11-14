@@ -46,18 +46,19 @@ start_x, end_x = -10, 10
 xs = generate_x_values(start_x, end_x, n_datapoints)
 
 # get y given a function
-y_true = np.sin(xs) ## TODO: choose function
-func_name = "sin(x)" ## TODO: write function name for saving params for dataset
+y_true = xs ## TODO: choose function
+func_name = "x" ## TODO: write function name for saving params for dataset
 # set noise distribution
 
-### TODO: uncomment to generate gaussian noise (Hampus previous code part)
-#lower_bound, upper_bound = -2, 2
-#noise_gaussian = np.random.uniform(lower_bound, upper_bound, n)
+### TODO: uncomment to generate noise (Hampus previous code part)
+lower_bound, upper_bound = -1, 1
+noise_uniform = np.random.uniform(lower_bound, upper_bound, n_datapoints)
 # add noise to the y-values
 
 ### Räkna SNR 
-y_noise = 0.2*coloured_noise_f(xs) + y_true  ### TODO: change first term to noise_gaussian if you want gaussian noise
-noise_name = "pink noise" ## TODO: write noise name for saving params for dataset
+# y_noise = 0.2*coloured_noise_f(xs) + y_true  ### TODO: change first term to noise_gaussian if you want gaussian noise
+y_noise = y_true + noise_uniform
+noise_name = "uniform noise" ## TODO: write noise name for saving params for dataset
 snr, snr_db = calculate_snr(y_true, y_noise)
 
 # create dataset
@@ -83,7 +84,7 @@ print(validation_df.head())
 
 
 # Create folder
-folder_name = "pink_sin_test5" #folder name for saving dataset  ## TODO: set folder name
+folder_name = "uniform_x_241114" #folder name for saving dataset  ## TODO: set folder name
 os.makedirs(f'./datasets/{folder_name}', exist_ok=True)
 
 # Save training and test sets to CSV files

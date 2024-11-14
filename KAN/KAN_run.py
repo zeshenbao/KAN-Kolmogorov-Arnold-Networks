@@ -26,7 +26,7 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
     grid = 3  # nr of spline grids
     k = 3 #order of spline
     seed = 0 #random seed
-    folder_name = "result5" #save folder name, one for each model run
+    folder_name = f'uniform_x_{width}_241114' #save folder name, one for each model run
     os.makedirs(f'./KAN/results/{folder_name}', exist_ok=True)
 
     kan_model = KAN(width=width, grid=grid, k=k, seed=seed)
@@ -56,14 +56,14 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
     # Train model
     ## Params ## TODO: can change params, only steps for friday 14 nov
     dataset_input = "y_noise, y_true"
-    opt = "LBFGS"
-    steps = 100
+    opt = "Adam"
+    steps = 800
     lr = 0.01
     lamb = 0.0
     
 
     start = time.time()
-    results = kan_model.fit(dataset, opt=opt, steps=steps, lr = lr , lamb = lamb)
+    results = kan_model.fit(dataset, opt=opt, steps=steps, lr=lr , lamb=lamb)
 
 
     end = time.time()
@@ -135,7 +135,7 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
     print(loss_melted.head())
 
     # Line plot for training and validation loss
-    sns.lineplot(data=loss_melted, x='Epoch', y='Loss', hue='Loss Type', marker='.')
+    sns.lineplot(data=loss_melted, x='Epoch', y='Loss', hue='Loss Type')
 
     # Set labels and title
     plt.xlabel("Epoch", fontsize=12)
@@ -187,7 +187,7 @@ def basic_fit(train_data: pd.DataFrame, val_data, test_data, total_data) -> dict
 #### Main():
 
 ### Import dataset
-import_data_folder = "pink_sin_test5"  ## TODO: select dataset
+import_data_folder = "uniform_x_241114"  ## TODO: select dataset
 
 train_data = read_data(f"./datasets/{import_data_folder}/train_data.csv")
 val_data = read_data(f"./datasets/{import_data_folder}/validation_data.csv")
