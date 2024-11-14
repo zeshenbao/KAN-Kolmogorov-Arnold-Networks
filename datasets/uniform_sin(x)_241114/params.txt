@@ -1,0 +1,5 @@
+n_datapoints: 1000
+start_x, end_x: (-10, 10)
+snr, snr_db: (1.4316675441276308, 1.5584217962431903)
+function name: sin(x)
+noise:uniform noise
