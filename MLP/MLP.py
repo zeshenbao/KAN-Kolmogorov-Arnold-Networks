@@ -58,7 +58,7 @@ class MLP(nn.Module):
             output = self.forward(x)
 
             # Compute loss
-            loss = self.loss_function(output, y)
+            loss = torch.sqrt(self.loss_function(output, y)) # sqrt to get RMSE instead of MSE
 
             # Backward pass
             loss.backward()
@@ -74,7 +74,7 @@ class MLP(nn.Module):
 
             with torch.no_grad():  # Disable gradient calculation for inference
                 validation_output = self.forward(self.validation_x)
-                validation_loss = self.loss_function(validation_output, self.validation_y)
+                validation_loss = torch.sqrt(self.loss_function(validation_output, self.validation_y))  # sqrt to get RMSE instead of MSE
                 self.val_loss_list.append(validation_loss.item())
 
     def set_val_data(self, x, y):
