@@ -3,5 +3,5 @@ width: [5, 5]
 opt: Adam (fixed)
 steps: 800
 lr: 0.01 (fixed)
-final validation loss: 0.43004003167152405
-final training loss: 0.42314413189888
+final validation loss: 0.4300187826156616
+final training loss: 0.4235400855541229
