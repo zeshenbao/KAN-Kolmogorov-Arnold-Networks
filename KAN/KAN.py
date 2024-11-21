@@ -22,7 +22,7 @@ print(device)
 torch.manual_seed(0)
 
 class KANWrapper(BaseEstimator, RegressorMixin):
-    def __init__(self, datasetPath, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.01, lamb=0.0):
+    def __init__(self, datasetPath, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=None, lamb=None):
         """
         Initialize the KAN model with the desired hyperparameters.
 
@@ -40,7 +40,7 @@ class KANWrapper(BaseEstimator, RegressorMixin):
         self.lr = lr 
         self.lamb = lamb
         # Set test dataset 
-        val_data = pd.read_csv(self.datasetPath)
+        val_data = pd.read_csv(f"{self.datasetPath}/validation_data.csv")
         X_val = torch.tensor(val_data['x']).float().unsqueeze(1)
         y_noise_val = torch.tensor(val_data['y_noise']).float().unsqueeze(1)
         y_true_val = torch.tensor(val_data['y_true']).float().unsqueeze(1)
@@ -111,14 +111,14 @@ class KANWrapper(BaseEstimator, RegressorMixin):
             setattr(self, parameter, value)
         
         # Re-initialize the model with updated parameters
-        self.model = KAN(width=self.width, grid=self.grid, k=self.k, seed=self.seed, lr=self.lr, lamb=self.lamb)
+        self.model = KAN(width=self.width, grid=self.grid, k=self.k, seed=self.seed)
         return self
 
 
 
 def find_best_params(datasetPath : str, param_grid : dict):
     # Read data
-    train_data = pd.read_csv(datasetPath)
+    train_data = pd.read_csv(f"{datasetPath}/train_data.csv")
     #val_data = read_data(f"./datasets/uniform_sin(x)_241114/validation_data.csv")
     #test_data = read_data(f"./datasets/uniform_sin(x)_241114/test_data.csv")
 
@@ -181,6 +181,11 @@ def find_best_params(datasetPath : str, param_grid : dict):
     print("Best Parameters:", grid_search.best_params_)
     print("Best Cross-Validation Score:", grid_search.best_score_)
 
+    return grid_search.best_params_
+
 
 if __name__ == "__main__":
-    find_best_params(datasetPath="./datasets/uniform_sin(x)_241114/train_data.csv", param_grid=None)
+    datasetPath="./datasets/uniform_sin(x)_241114"
+    params = find_best_params(datasetPath=datasetPath, param_grid=None)
+    import KAN_run as kan_eval
+    kan_eval.train_and_evaluate(params, datasetPath, funcName="uniform_sin(x)_241114")
