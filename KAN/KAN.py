@@ -10,18 +10,12 @@ import time
 
 
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(device)
-
-
-torch.manual_seed(0)
-
-
-def read_data(filepath:str) -> pd.DataFrame:
-    return pd.read_csv(filepath)
-
-
 def basic_fit(data: pd.DataFrame) -> dict:
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(device)
+
+    torch.manual_seed(0)
     # Initialize model and create dataset
     kan_model = KAN(width=[1, 20, 20, 1], grid=3, k=5, seed=0)
     X = torch.tensor(data["x"].values).float().unsqueeze(1)
@@ -137,9 +131,3 @@ def basic_fit(data: pd.DataFrame) -> dict:
     print(f"Elapsed Time: {elapsed_time:.3f} seconds")
 
     return results
-
-
-
-
-data = read_data("./datasets/data_pink_noise_flat.csv")
-basic_fit(data)
