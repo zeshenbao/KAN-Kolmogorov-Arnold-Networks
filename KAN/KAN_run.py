@@ -19,12 +19,17 @@ torch.manual_seed(0)
 def read_data(filepath:str) -> pd.DataFrame:
     return pd.read_csv(filepath)
 
-def basic_fit(folder_name : str, cfg : dict) -> dict:
+
+def basic_fit(cfg : dict) -> dict:
+
+    folder_name = cfg["folder_name"]
+    datasetPath = cfg["datasetPath"]
+    RESULTSPATH = f"./results/{folder_name}/KAN"
     # create dataset
-    train_data = read_data(f"./datasets/{folder_name}/train_data.csv")
-    val_data = read_data(f"./datasets/{folder_name}/validation_data.csv")
-    test_data = read_data(f"./datasets/{folder_name}/test_data.csv")
-    total_data = read_data(f"./datasets/{folder_name}/true_data.csv")
+    train_data = read_data(f"{datasetPath}/train_data.csv")
+    val_data = read_data(f"{datasetPath}/validation_data.csv")
+    test_data = read_data(f"{datasetPath}/test_data.csv")
+    total_data = read_data(f"{datasetPath}/true_data.csv")
     ## read params
     layers = cfg["layers"]
     grid = cfg["grid"]  # nr of spline grids
@@ -35,8 +40,7 @@ def basic_fit(folder_name : str, cfg : dict) -> dict:
     lr = cfg.get("lr", 1e-3)#learning rate
     lamb = cfg.get("lamb", 0.0) #regularization parameter
     ## ----------------------------------------
-    results_folder_name = f'{folder_name}_{layers}_241114' #save folder name, one for each model run
-    os.makedirs(f'./KAN/results/{results_folder_name}', exist_ok=True)
+    os.makedirs(f'{RESULTSPATH}', exist_ok=True)
 
     # Prepare data
     X_tot = torch.tensor(total_data['x']).float().unsqueeze(1)
@@ -51,6 +55,10 @@ def basic_fit(folder_name : str, cfg : dict) -> dict:
     y_noise_val = torch.tensor(val_data['y_noise']).float().unsqueeze(1)
     y_true_val = torch.tensor(val_data['y_true']).float().unsqueeze(1)
 
+    X_test = torch.tensor(test_data['x']).float().unsqueeze(1)
+    y_noise_test = torch.tensor(test_data['y_noise']).float().unsqueeze(1)
+    y_true_test = torch.tensor(test_data['y_true']).float().unsqueeze(1)
+
     #X_test = torch.tensor(test_data['x']).float().unsqueeze(1)
     #y_noise_test = torch.tensor(test_data['y_noise']).float().unsqueeze(1)
     #y_true_test = torch.tensor(test_data['y_true']).float().unsqueeze(1)
@@ -59,46 +67,26 @@ def basic_fit(folder_name : str, cfg : dict) -> dict:
 
 
     # Train model
-    dataset_input = "y_noise, y_true"
-    
+    start = time.time()
     kan_model = KAN(width=layers, grid=grid, k=k, seed=seed)
     start = time.time()
     results = kan_model.fit(dataset, opt=opt, steps=steps, lr=lr , lamb=lamb)
-
-
     end = time.time()
     elapsed_time = end - start
 
     # Generate predictions
     KAN_preds = kan_model(dataset['test_input']).detach()
-
-    print("KAN_preds",KAN_preds.shape)
-    # Debugging: Inspect results
-    print("Keys in results:", results.keys())
-
-    # Verify that 'train_loss' and 'test_loss' are present and are lists
-    required_keys = ['train_loss', 'test_loss']
-    for key in required_keys:
-        if key not in results:
-            raise KeyError(f"The 'results' dictionary must contain the '{key}' key.")
-        if not isinstance(results[key], list):
-            raise TypeError(f"'{key}' should be a list.")
-    
-    if len(results['train_loss']) != len(results['test_loss']):
-        raise ValueError("'train_loss' and 'test_loss' must be of the same length.")
-
+    print(f"validation pred shape: {KAN_preds.shape}")
     """
-    Plot the data, true function, and KAN predictions.
+    Plot the validation data and predictions
     """
     # Set Seaborn theme
     sns.set_theme(style="whitegrid")
     
-    # --- Plot 1: Data and Predictions ---
-    print("Test Input Shape:", dataset['test_input'].shape)
-    print("Test Label Shape:", dataset['test_label'].shape)
-    print("KAN Predictions Shape:", KAN_preds.shape)
 
+    # plot noisy validation
     plt.plot(X_val, y_noise_val, "o", markersize=1, linestyle='None', label="Validation data")
+    # plot true function
     plt.plot(X_tot, y_true_tot, "-",label='True function')
     
     sorted_X, indices = torch.sort(X_val, dim = 0)
@@ -110,12 +98,11 @@ def basic_fit(folder_name : str, cfg : dict) -> dict:
     plt.title("Prediction using KAN", fontsize=14, weight='bold')
 
     plt.tight_layout()
-    plt.savefig(f'./KAN/results/{results_folder_name}/plot.png', dpi=300)
+    plt.savefig(f'{RESULTSPATH}/train_plot.png', dpi=300)
 
     plt.clf()
 
     """
-    
     Plot the training and validation loss over epochs.
     """
     # Convert loss data to a DataFrame for Seaborn
@@ -133,10 +120,6 @@ def basic_fit(folder_name : str, cfg : dict) -> dict:
     # Melt the DataFrame for easier plotting with Seaborn
     loss_melted = loss_df.melt(id_vars='Epoch', var_name='Loss Type', value_name='Loss')
 
-    # Debugging: Inspect the melted DataFrame
-    print("Melted Loss DataFrame:")
-    print(loss_melted.head())
-
     # Line plot for training and validation loss
     sns.lineplot(data=loss_melted, x='Epoch', y='Loss', hue='Loss Type')
 
@@ -151,20 +134,54 @@ def basic_fit(folder_name : str, cfg : dict) -> dict:
     # Adjust layout for better spacing
     plt.tight_layout()
 
-    plt.savefig(f'./KAN/results/{results_folder_name}/loss.png', dpi=300)
-
+    plt.savefig(f'{RESULTSPATH}/loss.png', dpi=300)
+    print("saved loss to ", f'{RESULTSPATH}/loss.png')
     print(f"Elapsed Time: {elapsed_time:.3f} seconds")
 
     print(loss_df['Validation Loss'].iloc[-1])
 
+    plt.clf()
+
+    """
+    Plot the test data and predictions
+    """
+    KAN_preds = kan_model(y_noise_test).detach()
+    # calculate loss
+    loss = cfg.get("loss_fn", torch.nn.MSELoss())
+    test_loss = torch.sqrt(loss(KAN_preds, y_true_test))
+
+    # Set Seaborn theme
+    sns.set_theme(style="whitegrid")
+    
+    #sorted_X, indices = torch.sort(X_test, dim = 0)
+    #sorted_y_true = y_true_test[indices][:, :, 0]
+    # plot noisy validation
+    plt.plot(X_test, y_noise_test, "o", markersize=1, linestyle='None', label="Test data")
+    # plot true function
+    plt.plot(X_tot, y_true_tot, "-",label='True function')
     
     
-    file_path = f'./KAN/results/{results_folder_name}/model_params.txt'
+    sorted_X, indices = torch.sort(X_test, dim = 0)
+    sorted_KAN_preds = KAN_preds[indices][:, :, 0]
+
+    plt.plot(sorted_X, sorted_KAN_preds, "--", label='KAN predictions')
+    plt.xlabel("Random X 1D samples")
+    plt.ylabel("Function")
+    plt.legend()
+    plt.title("Prediction using KAN", fontsize=14, weight='bold')
+
+    plt.tight_layout()
+    plt.savefig(f'{RESULTSPATH}/test_plot.png', dpi=300)
+
+    plt.clf()
+
+    
+    
+    file_path = f'{RESULTSPATH}/model_params.txt'
 
     with open(file_path, "w") as file:
-        file.write(f"input to model: {dataset_input}\n")
         # write cfg
-        file.write(f"layers: {layers}\n")
+        file.write(f"width: {layers}\n")
         file.write(f"grid: {grid}\n")
         file.write(f"k: {k}\n")
         file.write(f"seed: {seed}\n")
@@ -174,191 +191,34 @@ def basic_fit(folder_name : str, cfg : dict) -> dict:
         file.write(f"lamb: {lamb}\n")
         file.write(f"final validation loss: {loss_df['Validation Loss'].iloc[-1]}\n")
         file.write(f"final training loss: {loss_df['Train Loss'].iloc[-1]}\n")
+        file.write(f"TEST LOSS: {test_loss}\n")
             
     print(f"Model parameters saved to {file_path}")
-    np.savez(f'./KAN/results/{results_folder_name}/plots.npz', epoch=range(1, len(results['train_loss']) + 1), train_loss = results['train_loss'], val_loss = results['test_loss'] , X_val=X_val, y_noise_val=y_noise_val , X_tot = X_tot, y_true_tot = y_true_tot, sorted_X = sorted_X, sorted_KAN_preds = sorted_KAN_preds)
+    np.savez(f'{RESULTSPATH}/plots.npz', epoch=range(1, len(results['train_loss']) + 1), train_loss = results['train_loss'], val_loss = results['test_loss'] , X_val=X_val, y_noise_val=y_noise_val , X_tot = X_tot, y_true_tot = y_true_tot, sorted_X = sorted_X, sorted_KAN_preds = sorted_KAN_preds)
         
     return results
 
 
-def main():
-    # TODO: Implement cross-validation and grid search for hyperparameter tuning
-    # TODO: Implement additional hyperparameter configurations
-    default = "uniform_sin(x)_241114"
-    configs = [{
-        "folder_name": default,
-        "layers" : [1, 3, 3, 1],
-        "grid" : 3,
-        "k" : 3,
-        "lr": 0.01, 
-        "steps": 800,
-        "lamb": 0.0,
-    }]
-    for cfg in configs:
-        print(f"Running model for {cfg['folder_name']}")
-        basic_fit(cfg["folder_name"], cfg)
+def train_and_evaluate(bestParams : dict, datasetPath : str, funcName : str = None):
+    """
+    Takes in a dictionary of hyperparameters and a dataset path, trains a model, plots training 
+    results, saves parameters to a file, then evaluates the model on the test set. Again saving the results
+    """
+    if funcName is None:
+        funcName = datasetPath.split("/")[-1]
 
+    # can also set loss_fn in cfg
 
-from sklearn.base import BaseEstimator, RegressorMixin
-
-from sklearn.base import BaseEstimator, RegressorMixin
-
-class FixedKAN(KAN):
-        def get_act(self, x=None):
-            '''
-            collect intermidate activations
-            '''
-            if isinstance(x, dict):
-                x = x['train_input']
-            if x is None:
-                if self.cache_data != None:
-                    x = self.cache_data
-                else:
-                    raise Exception("missing input data x")
-            save_act = self.save_act
-            self.save_act = True
-            self.forward(x)
-            self.save_act = save_act
-
-class KANWrapper(BaseEstimator, RegressorMixin):
-    def __init__(self, width=[1, 3, 3, 1], grid=3, k=5, seed=42):
-        """
-        Initialize the KAN model with the desired hyperparameters.
-
-        Parameters:
-        - width (list): Architecture width parameters.
-        - grid (int): Grid size parameter.
-        - k (int): Parameter k.
-        - seed (int): Random seed.
-        """
-        self.width = width
-        self.grid = grid
-        self.k = k
-        self.seed = seed
-        # Set test dataset 
-        val_data = read_data(f"./datasets/uniform_sin(x)_241114/validation_data.csv") # TODO
-        X_val = torch.tensor(val_data['x']).float().unsqueeze(1)
-        y_noise_val = torch.tensor(val_data['y_noise']).float().unsqueeze(1)
-        y_true_val = torch.tensor(val_data['y_true']).float().unsqueeze(1)
-        self.y_noise_val =  y_noise_val
-        self.y_true_val = y_true_val
-
-
-        # Initialize the actual KAN model with the parameters
-        self.model = FixedKAN(width=self.width, grid=self.grid, k=self.k, seed=self.seed)
-
-    def fit(self, X, y):
-        """
-        Fit the KAN model to the training data.
-
-        Parameters:
-        - X: Training features (torch.Tensor).
-        - y: Training labels (torch.Tensor).
-        """
-        _X = torch.tensor(X).float()
-        #_y = torch.tensor(y).float().unsqueeze(1)
-        _y = y
-        print(_X.shape)
-        print(_y.shape)
-        dataset = {"train_input": _X, "train_label": _y, "test_input": self.y_noise_val, "test_label": self.y_true_val}
-        self.model.fit(dataset, opt="LBFGS", steps=800, lr=0.01, lamb=0.0)
-        return self
-
-    def predict(self, X):
-        """
-        Predict using the trained KAN model.
-
-        Parameters:
-        - X: Input features for prediction (torch.Tensor).
-
-        Returns:
-        - Predictions (torch.Tensor).
-        """
-        return self.model(X)
-
-    def get_params(self, deep=True):
-        """
-        Get parameters for this estimator.
-
-        Returns:
-        - Dictionary of parameter names mapped to their values.
-        """
-        return {
-            'width': self.width,
-            'grid': self.grid,
-            'k': self.k,
-            'seed': self.seed
-        }
-
-    def set_params(self, **parameters):
-        """
-        Set the parameters of this estimator.
-
-        Parameters:
-        - **parameters: Estimator parameters.
-
-        Returns:
-        - self
-        """
-        for parameter, value in parameters.items():
-            setattr(self, parameter, value)
-        
-        # Re-initialize the model with updated parameters
-        self.model = FixedKAN(width=self.width, grid=self.grid, k=self.k, seed=self.seed)
-        return self
-
-
-
-def test():
-    # import pipeline and standard scaler
-    from sklearn.pipeline import Pipeline
-    from sklearn.preprocessing import StandardScaler
-    # Read data
-    train_data = read_data(f"./datasets/uniform_sin(x)_241114/train_data.csv")
-    #val_data = read_data(f"./datasets/uniform_sin(x)_241114/validation_data.csv")
-    #test_data = read_data(f"./datasets/uniform_sin(x)_241114/test_data.csv")
-
-    X, y = torch.tensor(train_data['y_noise']).float().unsqueeze(1), torch.tensor(train_data['y_true']).float().unsqueeze(1)
-
-
-    from sklearn.model_selection import GridSearchCV
-
-    # Initialize your KAN model
-    # KAN(width=layers, grid=grid, k=k, seed=seed)
-    kan_wrapper = KANWrapper()
-
-    # Define a parameter grid
-    param_grid = {
-        'kan__width': [[1, 3, 3, 1], [1, 5, 5, 1]],
-        'kan__grid': [10, 5],
-        'kan__k': [3, 5],
-        'kan__seed': [42]
+    cfg = {
+        "folder_name": funcName,
+        "datasetPath" : datasetPath,
+        "layers" : bestParams.get("kan__width"),
+        "grid" : bestParams.get("kan__grid"),
+        "k" : bestParams.get("kan__k"),
+        "lr": bestParams.get("kan__lr"),
+        "steps": 200,
+        "lamb": bestParams.get("kan__lamb")
     }
-
-    # (Optional) Create a pipeline if preprocessing is needed
-    pipeline = Pipeline([
-        ('scaler', StandardScaler()),  # Example preprocessor
-        ('kan', kan_wrapper)
-    ])
-
-
-    # Initialize GridSearchCV
-    grid_search = GridSearchCV(
-        estimator=pipeline,
-        param_grid=param_grid,
-        cv=5,  # 5-Fold Cross-Validation
-        scoring='neg_mean_squared_error',  # Use appropriate regression metric
-        n_jobs=-1,  # Utilize all available CPU cores
-        verbose=2
-    )
-
-    # Fit GridSearchCV
-    grid_search.fit(X, y)
-
-    # Retrieve the best parameters and best score
-    print("Best Parameters:", grid_search.best_params_)
-    print("Best Cross-Validation Score:", grid_search.best_score_)
-
-
-if __name__ == "__main__":
-    test()
+    print(cfg)
+    print(f"Running model for {cfg['folder_name']}")
+    basic_fit(cfg)
