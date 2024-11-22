@@ -7,8 +7,6 @@ import torch.optim as optim
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-from polynomials import polynomial_d1, polynomial_d2, polynomial_d3
-
 class MLP(nn.Module):
     """Creates a Multilayer Perceptron."""
 

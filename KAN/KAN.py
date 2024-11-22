@@ -115,7 +115,6 @@ class KANWrapper(BaseEstimator, RegressorMixin):
         return self
 
 
-
 def find_best_params(datasetPath : str, param_grid : dict):
     # Read data
     train_data = pd.read_csv(f"{datasetPath}/train_data.csv")
@@ -199,3 +198,4 @@ if __name__ == "__main__":
     params = find_best_params(datasetPath=datasetPath, param_grid=param_grid)
     import KAN_run as kan_eval
     kan_eval.train_and_evaluate(params, datasetPath, funcName="uniform_sin(x)_241121")
+
