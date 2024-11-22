@@ -4,6 +4,10 @@ import matplotlib.pyplot as plt
 import sklearn
 from sklearn import neural_network,pipeline,preprocessing,linear_model
 import torch
+import torch.nn as nn
+import torch.optim as optim
+from tqdm import tqdm
+import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from kan import *
@@ -12,58 +16,50 @@ from sklearn.model_selection import KFold, cross_val_score, StratifiedKFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
+from MLP import MLP
 
-
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(device)
-
-torch.manual_seed(0)
-
-class KANWrapper(BaseEstimator, RegressorMixin):
-
-    def __init__(self, data=None, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01):
+class MLPWrapper(BaseEstimator, RegressorMixin):
+    def __init__(self, data, input_size=1, hidden_sizes=[1], output_size=1, steps=800):
         """
-        Initialize the KAN model with the desired hyperparameters.
+        Initialize the MLP model with the desired hyperparameters.
 
         Parameters:
-        - width (list): Architecture width parameters.
-        - grid (int): Grid size parameter.
-        - k (int): Parameter k.
-        - seed (int): Random seed.
+        - input_size (int): Architecture input param.
+        - hidden_sizes (list): Architecture hidden layer parameters.
+        - output_size (int): Architecture output param.
         """
         self.data = data
-        self.width = width
-        self.grid = grid
-        self.k = k
-        self.seed = seed
-        self.lr = lr 
-        self.lamb = lamb
+        self.input_size = input_size
+        self.hidden_sizes = hidden_sizes
+        self.output_size = output_size
+        
+        self.steps = steps
+
         self.X_train =  self.data['train'][0][:,1].unsqueeze(1)           # get the y_noise
         self.y_train = self.data['train'][1].unsqueeze(1)
         self.X_validation =  self.data['validation'][0][:,1].unsqueeze(1) # get the y_noise
         self.y_validation = self.data['validation'][1].unsqueeze(1)
         self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_validation, "test_label":self.y_validation}
 
-        
-        # Initialize the actual KAN model with the parameters
-        self.model = KAN(width=self.width, grid=self.grid, k=self.k, seed=self.seed)
+        # Initialize the actual MLP model with the parameters
+        self.model = MLP(input_size=1, hidden_sizes=[1], output_size=1)
 
-        
     def fit(self, X, y):
         """
-        Fit the KAN model to the training data.
+        Fit the MLP model to the training data.
 
         Parameters:
+        - X: Training features (torch.Tensor).
+        - y: Training labels (torch.Tensor).
         """
-        _dataset = self.dataset
-        _dataset['train_input'] = torch.tensor(X).float()
-        _dataset['train_label'] = torch.tensor(y).float()
-        self.model.fit(_dataset, opt="LBFGS", steps=400, lr=self.lr, lamb=self.lamb)
+        X_ = torch.tensor(X).float()
+        y_ = torch.tensor(y).float()
+        self.model.fit(X_, y_, n_epochs=self.steps, cross_validation=True)
         return self
 
     def predict(self, X):
         """
-        Predict using the trained KAN model.
+        Predict using the trained MLP model.
 
         Parameters:
         - X: Input features for prediction (torch.Tensor).
@@ -71,8 +67,7 @@ class KANWrapper(BaseEstimator, RegressorMixin):
         Returns:
         - Predictions (torch.Tensor).
         """
-        _X = torch.tensor(X).float()
-        return self.model(_X).detach()
+        return self.model.predict(X).detach()
 
     def get_params(self, deep=True):
         """
@@ -82,15 +77,12 @@ class KANWrapper(BaseEstimator, RegressorMixin):
         - Dictionary of parameter names mapped to their values.
         """
         return {
-            'data': self.data,
-            'width': self.width,
-            'grid': self.grid,
-            'k': self.k,
-            'seed': self.seed,
-            'lr': self.lr,
-            'lamb': self.lamb,
+            'data' : self.data,
+            'input_size': self.input_size,
+            'hidden_sizes': self.hidden_sizes,
+            'output_size': self.output_size,
+            'steps': self.steps
         }
-    
 
     def set_params(self, **parameters):
         """
@@ -106,5 +98,5 @@ class KANWrapper(BaseEstimator, RegressorMixin):
             setattr(self, parameter, value)
         
         # Re-initialize the model with updated parameters
-        self.model = KAN(width=self.width, grid=self.grid, k=self.k, seed=self.seed)
+        self.model = MLP(input_size=self.input_size, hidden_sizes=self.hidden_sizes, output_size=self.output_size)
         return self
