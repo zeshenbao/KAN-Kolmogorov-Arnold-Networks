@@ -22,7 +22,7 @@ print(device)
 torch.manual_seed(0)
 
 class KANWrapper(BaseEstimator, RegressorMixin):
-    def __init__(self, datasetPath, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.01, lamb=0.0):
+    def __init__(self, datasetPath, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=None, lamb=None):
         """
         Initialize the KAN model with the desired hyperparameters.
 
@@ -40,7 +40,7 @@ class KANWrapper(BaseEstimator, RegressorMixin):
         self.lr = lr 
         self.lamb = lamb
         # Set test dataset 
-        val_data = pd.read_csv(self.datasetPath)
+        val_data = pd.read_csv(f"{self.datasetPath}/validation_data.csv")
         X_val = torch.tensor(val_data['x']).float().unsqueeze(1)
         y_noise_val = torch.tensor(val_data['y_noise']).float().unsqueeze(1)
         y_true_val = torch.tensor(val_data['y_true']).float().unsqueeze(1)
@@ -78,7 +78,7 @@ class KANWrapper(BaseEstimator, RegressorMixin):
         - Predictions (torch.Tensor).
         """
         _X = torch.tensor(X).float()
-        return self.model(_X)
+        return self.model(_X).detach()
 
     def get_params(self, deep=True):
         """
@@ -111,14 +111,13 @@ class KANWrapper(BaseEstimator, RegressorMixin):
             setattr(self, parameter, value)
         
         # Re-initialize the model with updated parameters
-        self.model = KAN(width=self.width, grid=self.grid, k=self.k, seed=self.seed, lr=self.lr, lamb=self.lamb)
+        self.model = KAN(width=self.width, grid=self.grid, k=self.k, seed=self.seed)
         return self
-
 
 
 def find_best_params(datasetPath : str, param_grid : dict):
     # Read data
-    train_data = pd.read_csv(datasetPath)
+    train_data = pd.read_csv(f"{datasetPath}/train_data.csv")
     #val_data = read_data(f"./datasets/uniform_sin(x)_241114/validation_data.csv")
     #test_data = read_data(f"./datasets/uniform_sin(x)_241114/test_data.csv")
 
@@ -131,15 +130,16 @@ def find_best_params(datasetPath : str, param_grid : dict):
     # Define a parameter grid
     param_grid = param_grid if param_grid is not None else {}
 
-    param_grid = {
-        'kan__width': [[1, 3, 3, 1], [1, 5, 5, 1]],
-        'kan__grid': [5],
-        'kan__k': [3],
-        'kan__seed': [42],
-        'kan__lr': [0.01, 0.001],
-        'kan__lamb': [0.0, 0.1, 0.2],
-        'kan__datasetPath': [datasetPath]
-    }
+    if param_grid is None:
+        param_grid = {
+            'kan__width': [[1, 3, 3, 1], [1, 5, 5, 1]],
+            'kan__grid': [5],
+            'kan__k': [3],
+            'kan__seed': [42],
+            'kan__lr': [0.01, 0.001],
+            'kan__lamb': [0.0, 0.1, 0.2],
+            'kan__datasetPath': [datasetPath]
+        }
     
 
     # (Optional) Create a pipeline if preprocessing is needed
@@ -166,7 +166,7 @@ def find_best_params(datasetPath : str, param_grid : dict):
     grid_search = RandomizedSearchCV(
         estimator=pipeline,
         param_distributions=param_grid,
-        n_iter=10,  # Number of parameter settings sampled
+        n_iter=1,  # Number of parameter settings sampled
         cv=5,        # 5-Fold Cross-Validation
         scoring='neg_mean_squared_error',  # Appropriate for regression
         random_state=42,                    # For reproducibility
@@ -181,6 +181,21 @@ def find_best_params(datasetPath : str, param_grid : dict):
     print("Best Parameters:", grid_search.best_params_)
     print("Best Cross-Validation Score:", grid_search.best_score_)
 
+    return grid_search.best_params_
+
 
 if __name__ == "__main__":
-    find_best_params(datasetPath="./datasets/uniform_sin(x)_241114/train_data.csv", param_grid=None)
+    datasetPath="./datasets/uniform_sin(x)_241121"
+    param_grid = {
+        'kan__width': [[1, 3, 3, 1]],
+        'kan__grid': [5],
+        'kan__k': [3],
+        'kan__seed': [42],
+        'kan__lr': [0.01],
+        'kan__lamb': [0.0],
+        'kan__datasetPath': [datasetPath]
+    }
+    params = find_best_params(datasetPath=datasetPath, param_grid=param_grid)
+    import KAN_run as kan_eval
+    kan_eval.train_and_evaluate(params, datasetPath, funcName="uniform_sin(x)_241121")
+

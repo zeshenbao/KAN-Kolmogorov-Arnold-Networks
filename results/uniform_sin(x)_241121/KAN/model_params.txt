@@ -1,0 +1,11 @@
+width: [[1, 0], [3, 0], [3, 0], [1, 0]]
+grid: 5
+k: 3
+seed: 0
+opt: Adam
+steps: 200
+lr: 0.01
+lamb: 0.0
+final validation loss: 0.4373200535774231
+final training loss: 0.41818901896476746
+TEST LOSS: 0.44991961121559143
