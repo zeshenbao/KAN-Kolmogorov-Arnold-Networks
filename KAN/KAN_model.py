@@ -9,7 +9,8 @@ import time
 
 
 class KANModel():
-    def __init__(self, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01):
+    def __init__(self, results_path=None, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01):
+        self.RESULTSPATH = results_path
         self.width = width
         self.grid = grid
         self.k = k
@@ -22,21 +23,28 @@ class KANModel():
     def load_data(self, data):
         self.X_train =  data['train'][0][:,1].unsqueeze(1)          # get the y_noise
         self.y_train = data['train'][1].unsqueeze(1)
+        self.X_validation =  data['validation'][0][:,1].unsqueeze(1) # get the y_noise
+        self.y_validation = data['validation'][1].unsqueeze(1)
         self.X_test =  data['test'][0][:,1].unsqueeze(1)            # get the y_noise
         self.y_test = data['test'][1].unsqueeze(1)
-        self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_test, "test_label":self.y_test}
+        self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_validation, "test_label":self.y_validation}
 
     def fit(self):
         start = time.time()
-        results = self.model.fit(self.dataset, opt="LBFGS", steps=800, lr=self.lr , lamb=self.lamb)
+        results = self.model.fit(self.dataset, opt="LBFGS", steps=50, lr=self.lr , lamb=self.lamb)
         end = time.time()
 
         elapsed_time = end - start
         return results, elapsed_time
 
     def predict(self):
-        y_pred = self.model(self.dataset['test_input']).detach()
-        return y_pred
+        """
+        Returns predictions made by the model for self.X_test, and the loss: RMSE
+        """
+        loss = torch.nn.MSELoss()
+        y_pred = self.model(self.X_test).detach()
+        results = {"preds": y_pred, "test_loss": torch.sqrt(loss(y_pred, self.y_test))}
+        return results
 
     def plot_prediction(self, data, y_preds, type_='test', save=False):
         """
@@ -72,7 +80,7 @@ class KANModel():
         plt.tight_layout()
 
         if save:
-            plt.savefig(f'../results/train_plot.png', dpi=300)
+            plt.savefig(f'{self.RESULTSPATH}/train_plot.png', dpi=300)
 
         plt.show()
 
@@ -112,25 +120,30 @@ class KANModel():
 
         if save:
             plt.savefig('../results/loss.png', dpi=300)
-            print("saved loss to ", f'{RESULTSPATH}/loss.png')
+            print("saved loss to ", f'{ self.RESULTSPATH}/loss.png')
 
         plt.show()
 
-    def write_params_to_file():
-        file_path = 'RESULTSPATH/model_params.txt'
+    def write_params_to_file(self, extra_params=None):
+        """
+        Writes current cfg to a file, saves training parameters and results to a .npz file. 
+        Argument extra_params is a dictionary of extra parameters to save.
+        """
+        file_path = f'{self.RESULTSPATH}/model_params.txt'
 
         with open(file_path, "w") as file:
             # write cfg
-            file.write(f"width: {self.layers}\n")
+            file.write(f"width: {self.width}\n")
             file.write(f"grid: {self.grid}\n")
             file.write(f"k: {self.k}\n")
             file.write(f"seed: {self.seed}\n")
-            file.write(f"opt: {self.opt}\n")
-            file.write(f"steps: {self.steps}\n")
             file.write(f"lr: {self.lr}\n")
             file.write(f"lamb: {self.lamb}\n")
-                
+                 # Write extra parameters if provided
+            if extra_params:
+                for key, value in extra_params.items():
+                    file.write(f"{key}: {value}\n")
+
         print(f"Model parameters saved to {file_path}")
-        np.savez(f'{RESULTSPATH}/plots.npz', epoch=range(1, len(results['train_loss']) + 1), train_loss = results['train_loss'], val_loss = results['test_loss'] , X_val=X_val, y_noise_val=y_noise_val , X_tot = X_tot, y_true_tot = y_true_tot, sorted_X = sorted_X, sorted_KAN_preds = sorted_KAN_preds)
+        #np.savez(f'{self.RESULTSPATH}/plots.npz', epoch=range(1, len(results['train_loss']) + 1), train_loss = results['train_loss'], val_loss = results['test_loss'] , X_val=X_val, y_noise_val=y_noise_val , X_tot = X_tot, y_true_tot = y_true_tot, sorted_X = sorted_X, sorted_KAN_preds = sorted_KAN_preds)
             
-        return results

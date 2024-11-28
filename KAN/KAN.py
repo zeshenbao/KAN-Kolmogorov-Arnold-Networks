@@ -58,7 +58,7 @@ class KANWrapper(BaseEstimator, RegressorMixin):
         _dataset = self.dataset
         _dataset['train_input'] = torch.tensor(X).float()
         _dataset['train_label'] = torch.tensor(y).float()
-        self.model.fit(_dataset, opt="LBFGS", steps=400, lr=self.lr, lamb=self.lamb)
+        self.model.fit(_dataset, opt="LBFGS", steps=50, lr=self.lr, lamb=self.lamb)
         return self
 
     def predict(self, X):
