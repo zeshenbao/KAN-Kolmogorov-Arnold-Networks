@@ -130,7 +130,8 @@ class KANModel():
         Argument extra_params is a dictionary of extra parameters to save.
         """
         file_path = f'{self.RESULTSPATH}/model_params.txt'
-
+        import os
+        os.makedirs(self.RESULTSPATH, exist_ok=True)
         with open(file_path, "w") as file:
             # write cfg
             file.write(f"width: {self.width}\n")

@@ -4,5 +4,5 @@ k: 5
 seed: 42
 lr: 0.001
 lamb: 0.01
-test_loss:: 0.45748069882392883
-opt:: LBFGS
+test_loss: 0.45748069882392883
+opt: LBFGS

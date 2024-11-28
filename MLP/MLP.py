@@ -12,11 +12,15 @@ import pandas as pd
 class MLP(nn.Module):
     """Creates a Multilayer Perceptron."""
 
-    def __init__(self, input_size=1, hidden_sizes=[1], output_size=1):
+    def __init__(self, result_path=None, input_size=1, hidden_sizes=[1], output_size=1):
         super(MLP, self).__init__()
         self.layers = list()
-
+        self.RESULTSPATH = result_path
         i_size = input_size
+
+        self.input_size = input_size
+        self.hidden_sizes = hidden_sizes
+        self.output_size = output_size
 
         for h_size in hidden_sizes:
             self.layers.append(nn.Linear(i_size, h_size))
@@ -44,12 +48,23 @@ class MLP(nn.Module):
     def forward(self, x):
         return self.layers(x)
 
-    def predict(self, x):
+    def predict(self, x, eval=None):
         """Make predictions using the trained model."""
         X_tensor = torch.Tensor(x)
-        self.eval()  
-        with torch.no_grad():  
-            return self(X_tensor)
+        if eval:
+            res = {"preds":0, "test_loss":0}
+            loss = torch.nn.MSELoss()
+            X_tensor = torch.Tensor(x)
+            self.eval()  
+            with torch.no_grad():  
+                y_pred = self(X_tensor)
+                res["preds"] = y_pred
+                res["test_loss"] = torch.sqrt(loss(y_pred, self.y_test))
+            return res
+        else:
+            self.eval()
+            with torch.no_grad():
+                return self(X_tensor)
 
     
     def fit(self, X, y, n_epochs, cross_validation=False):
@@ -124,7 +139,7 @@ class MLP(nn.Module):
         plt.tight_layout()
 
         if save:
-            plt.savefig(f'../results/train_plot.png', dpi=300)
+            plt.savefig(f'{self.RESULTSPATH}/train_plot.png', dpi=300)
 
         plt.show()
 
@@ -163,26 +178,25 @@ class MLP(nn.Module):
         plt.tight_layout()
 
         if save:
-            plt.savefig('../results/loss.png', dpi=300)
-            print("saved loss to ", f'{RESULTSPATH}/loss.png')
+            plt.savefig(f'{self.RESULTSPATH}/loss.png', dpi=300)
+            print("saved loss to ", f'{self.RESULTSPATH}/loss.png')
 
         plt.show()
 
-    def write_params_to_file():
-        file_path = 'RESULTSPATH/model_params.txt'
-
+    def write_params_to_file(self, extra_params=None):
+        file_path = f'{self.RESULTSPATH}/model_params.txt'
+        import os
+        os.makedirs(self.RESULTSPATH, exist_ok=True)
         with open(file_path, "w") as file:
             # write cfg
-            file.write(f"width: {self.layers}\n")
-            file.write(f"grid: {self.grid}\n")
-            file.write(f"k: {self.k}\n")
-            file.write(f"seed: {self.seed}\n")
-            file.write(f"opt: {self.opt}\n")
-            file.write(f"steps: {self.steps}\n")
-            file.write(f"lr: {self.lr}\n")
-            file.write(f"lamb: {self.lamb}\n")
+            file.write(f"input size: {self.input_size}\n")
+            file.write(f"hidden-layers: {self.hidden_sizes}\n")
+            file.write(f"output size: {self.output_size}\n")
+
+        if extra_params:
+            with open(file_path, "a") as file:
+                for key, value in extra_params.items():
+                    file.write(f"{key}: {value}\n")
                 
         print(f"Model parameters saved to {file_path}")
-        np.savez(f'{RESULTSPATH}/plots.npz', epoch=range(1, len(results['train_loss']) + 1), train_loss = results['train_loss'], val_loss = results['test_loss'] , X_val=X_val, y_noise_val=y_noise_val , X_tot = X_tot, y_true_tot = y_true_tot, sorted_X = sorted_X, sorted_KAN_preds = sorted_KAN_preds)
-            
-        return results
+        #np.savez(f'{RESULTSPATH}/plots.npz', epoch=range(1, len(results['train_loss']) + 1), train_loss = results['train_loss'], val_loss = results['test_loss'] , X_val=X_val, y_noise_val=y_noise_val , X_tot = X_tot, y_true_tot = y_true_tot, sorted_X = sorted_X, sorted_KAN_preds = sorted_KAN_preds)
