@@ -40,7 +40,7 @@ class CreateInput():
         # Process and return tensors for all datasets
         if self.deepmimo:
             train_tensors = self.process_data(self.X_train, self.y_train)
-            test_tensors = self.process_data(self.y_test, self.y_test)
+            test_tensors = self.process_data(self.X_test, self.y_test)
             validation_tensors = None
             true_tensors = None
 

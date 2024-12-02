@@ -10,7 +10,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 
 class KANModel():
-    def __init__(self, results_path=None, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01, deepmimo=False):
+    def __init__(self, results_path=None, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01, deepmimo=False,steps=10):
         self.RESULTSPATH = results_path
         self.deepmimo = deepmimo
         self.width = width
@@ -19,6 +19,7 @@ class KANModel():
         self.seed = seed
         self.lr = lr 
         self.lamb = lamb
+        self.steps = steps
 
         self.model = KAN(width=self.width, grid=self.grid, k=self.k, seed=self.seed)
 
@@ -42,7 +43,7 @@ class KANModel():
 
     def fit(self):
         start = time.time()
-        results = self.model.fit(self.dataset, opt="LBFGS", steps=10, lr=self.lr , lamb=self.lamb)
+        results = self.model.fit(self.dataset, opt="LBFGS", steps=self.steps, lr=self.lr , lamb=self.lamb)
         end = time.time()
 
         elapsed_time = end - start
@@ -96,12 +97,14 @@ class KANModel():
 
     def plot_deepmimo(self, data, y_preds, type_='test', save=False):
 
+        reshape_dim = int(np.sqrt(y_preds.shape[1]))
+        print(reshape_dim)
         # mean all preds as the y_true is same for all
         y_pred = torch.mean(y_preds, dim=0, keepdim=True)
         print(y_pred.shape)
         # Reshape to 64x64, discard the extra element
-        prediction_reshaped = y_pred[0,:].reshape(64, 64)
-        true_reshaped = data['test'][1][0,:].reshape(64, 64)
+        prediction_reshaped = y_pred[0,:].reshape(reshape_dim, reshape_dim)
+        true_reshaped = data['test'][1][0,:].reshape(reshape_dim, reshape_dim)
 
         scaler = MinMaxScaler()
         prediction_reshaped = scaler.fit_transform(prediction_reshaped)
