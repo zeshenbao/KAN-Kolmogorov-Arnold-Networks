@@ -1,0 +1,5 @@
+n_datapoints: 5000
+start_x, end_x: (-10, 10)
+snr, snr_db: (8.51376362351457, 9.3012158823854)
+function name: np.sin(x)
+noise:pink noise

@@ -1,0 +1,11 @@
+input to model: y_noise, y_true
+width: [[1, 0], [7, 0], [7, 0], [7, 0], [1, 0]]
+grid: 3
+k: 3
+seed: 0
+opt: Adam
+steps: 800
+lr: 0.01
+lamb: 0.0
+final validation loss: 0.4361351728439331
+final training loss: 0.40118470788002014

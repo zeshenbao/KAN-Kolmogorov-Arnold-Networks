@@ -1,0 +1,11 @@
+input to model: y_noise, y_true
+width: [[1, 0], [3, 0], [3, 0], [1, 0]]
+grid: 5
+k: 3
+seed: 0
+opt: LBFGS
+steps: 10
+lr: 0.01
+lamb: 0.0
+final validation loss: 0.17760969698429108
+final training loss: 0.17957083880901337

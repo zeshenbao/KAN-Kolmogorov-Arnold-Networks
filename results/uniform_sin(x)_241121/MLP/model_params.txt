@@ -1,0 +1,5 @@
+input size: 1
+hidden-layers: [5]
+output size: 1
+test_loss: 0.45699039101600647
+opt: Adam

@@ -1,3 +1,4 @@
+from sklearn.base import BaseEstimator, RegressorMixin
 import numpy as np
 import matplotlib.pyplot as plt
 import sklearn
@@ -7,129 +8,113 @@ import pandas as pd
 import seaborn as sns
 from kan import *
 import time
+from sklearn.model_selection import KFold, cross_val_score, StratifiedKFold
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(device)
-
 
 torch.manual_seed(0)
 
+class KANWrapper(BaseEstimator, RegressorMixin):
 
-def read_data(filepath:str) -> pd.DataFrame:
-    return pd.read_csv(filepath)
+    def __init__(self, data=None, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01, deepmimo=False):
+        """
+        Initialize the KAN model with the desired hyperparameters.
 
+        Parameters:
+        - width (list): Architecture width parameters.
+        - grid (int): Grid size parameter.
+        - k (int): Parameter k.
+        - seed (int): Random seed.
+        """
+        self.deepmimo = deepmimo
+        self.data = data
+        self.width = width
+        self.grid = grid
+        self.k = k
+        self.seed = seed
+        self.lr = lr 
+        self.lamb = lamb
 
-def basic_fit(data: pd.DataFrame) -> dict:
-    # Initialize model and create dataset
-    kan_model = KAN(width=[1, 10, 10, 1], grid=3, k=5, seed=0)
-    X = torch.tensor(data["x"].values).float().unsqueeze(1)
-    y = torch.tensor(data["y"].values).float().unsqueeze(1)
-    dataset = create_dataset_from_data(X, y)
+        if self.deepmimo:
+            self.X_train =  self.data['train'][0]           
+            self.y_train = self.data['train'][1]
+            self.X_test =  self.data['test'][0]
+            self.y_test = self.data['test'][1]
+            self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_test, "test_label":self.y_test}
 
-    # Train model
-    start = time.time()
-    results = kan_model.fit(dataset, opt="LBFGS", steps=20, lamb=0.001, lamb_entropy=10.)
-    end = time.time()
-    elapsed_time = end - start
+        else:
+            self.X_train =  self.data['train'][0][:,1].unsqueeze(1)           # get the y_noise
+            self.y_train = self.data['train'][1].unsqueeze(1)
+            self.X_validation =  self.data['validation'][0][:,1].unsqueeze(1) # get the y_noise
+            self.y_validation = self.data['validation'][1].unsqueeze(1)
+            self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_validation, "test_label":self.y_validation}
 
-    # Generate predictions
-    KAN_preds = kan_model(dataset['test_input']).detach()
+        
+        # Initialize the actual KAN model with the parameters
+        self.model = KAN(width=self.width, grid=self.grid, k=self.k, seed=self.seed)
 
-    # Debugging: Inspect results
-    print("Keys in results:", results.keys())
-    print("Train Loss:", results.get('train_loss'))
-    print("Validation/Test Loss:", results.get('test_loss'))
+        
+    def fit(self, X, y):
+        """
+        Fit the KAN model to the training data.
 
-    # Verify that 'train_loss' and 'test_loss' are present and are lists
-    required_keys = ['train_loss', 'test_loss']
-    for key in required_keys:
-        if key not in results:
-            raise KeyError(f"The 'results' dictionary must contain the '{key}' key.")
-        if not isinstance(results[key], list):
-            raise TypeError(f"'{key}' should be a list.")
+        Parameters:
+        """
+        _dataset = self.dataset
+        _dataset['train_input'] = torch.tensor(X).float()
+        _dataset['train_label'] = torch.tensor(y).float()
+        self.model.fit(_dataset, opt="LBFGS", steps=50, lr=self.lr, lamb=self.lamb)
+        return self
+
+    def predict(self, X):
+        """
+        Predict using the trained KAN model.
+
+        Parameters:
+        - X: Input features for prediction (torch.Tensor).
+
+        Returns:
+        - Predictions (torch.Tensor).
+        """
+        _X = torch.tensor(X).float()
+        return self.model(_X).detach()
+
+    def get_params(self, deep=True):
+        """
+        Get parameters for this estimator.
+
+        Returns:
+        - Dictionary of parameter names mapped to their values.
+        """
+        return {
+            'data': self.data,
+            'width': self.width,
+            'grid': self.grid,
+            'k': self.k,
+            'seed': self.seed,
+            'lr': self.lr,
+            'lamb': self.lamb,
+            'deepmimo': self.deepmimo
+        }
     
-    if len(results['train_loss']) != len(results['test_loss']):
-        raise ValueError("'train_loss' and 'test_loss' must be of the same length.")
 
-    # Set Seaborn theme
-    sns.set_theme(style="whitegrid")
+    def set_params(self, **parameters):
+        """
+        Set the parameters of this estimator.
 
-    # Create a figure with two subplots side by side
-    fig, ax = plt.subplots(1, 2, figsize=(16, 6))
+        Parameters:
+        - **parameters: Estimator parameters.
 
-    # --- Plot 1: Data and Predictions ---
-    print("Test Input Shape:", dataset['test_input'].shape)
-    print("Test Label Shape:", dataset['test_label'].shape)
-    print("KAN Predictions Shape:", KAN_preds.shape)
-
-
-    sorted_indices_test = np.argsort(dataset['test_input'], axis=0)
-    sorted_indices_all = np.argsort(X, axis=0)
-
-    plot_array_test = torch.gather(dataset['test_input'], dim=0, index=sorted_indices_test)
-    plot_array_pred = torch.gather(KAN_preds, dim=0, index=sorted_indices_test)
-
-    plot_array_x_tot = torch.gather(X, dim=0, index=sorted_indices_all)
-    plot_array_y_tot = torch.gather(y, dim=0, index=sorted_indices_all)
-
-
-    ax[0].plot(plot_array_x_tot, plot_array_y_tot, "o", markersize=1, linestyle='None', label="Data")
-    ax[0].plot(plot_array_test, plot_array_pred, "--",label='KAN predictions')
-    
-
-    ax[0].set_xlabel("Random X 1D samples")
-    ax[0].set_ylabel("Function")
-    ax[0].legend()
-
-
-
-    # --- Plot 2: Training and Validation Loss ---
-    # Convert loss data to a DataFrame for Seaborn
-    loss_df = pd.DataFrame({
-        'Epoch': range(1, len(results['train_loss']) + 1),
-        'Train Loss': results['train_loss'],
-        'Validation Loss': results['test_loss']
-    })
-
-    # Ensure correct data types
-    loss_df['Epoch'] = loss_df['Epoch'].astype(int)
-    loss_df['Train Loss'] = loss_df['Train Loss'].astype(float)
-    loss_df['Validation Loss'] = loss_df['Validation Loss'].astype(float)
-
-    # Melt the DataFrame for easier plotting with Seaborn
-    loss_melted = loss_df.melt(id_vars='Epoch', var_name='Loss Type', value_name='Loss')
-
-    # Debugging: Inspect the melted DataFrame
-    print("Melted Loss DataFrame:")
-    print(loss_melted.head())
-
-    # Line plot for training and validation loss
-    sns.lineplot(data=loss_melted, x='Epoch', y='Loss', hue='Loss Type',
-                 ax=ax[1], marker='o')
-
-    # Set labels and title
-    ax[1].set_xlabel("Epoch", fontsize=12)
-    ax[1].set_ylabel("Loss", fontsize=12)
-    ax[1].set_title("Training and Validation Loss Over Epochs", fontsize=14, weight='bold')
-
-    # Customize legend
-    ax[1].legend(title='Loss Type', fontsize=10, title_fontsize=12)
-
-    # Adjust layout for better spacing
-    plt.tight_layout()
-
-    # Optional: Save the figure with high resolution
-    # plt.savefig('enhanced_plots.png', dpi=300)
-
-    # Display the plots
-    plt.show()
-
-    print(f"Elapsed Time: {elapsed_time:.3f} seconds")
-
-    return results
-
-
-
-
-
+        Returns:
+        - self
+        """
+        for parameter, value in parameters.items():
+            setattr(self, parameter, value)
+        
+        # Re-initialize the model with updated parameters
+        self.model = KAN(width=self.width, grid=self.grid, k=self.k, seed=self.seed)
+        return self
