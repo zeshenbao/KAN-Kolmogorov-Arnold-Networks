@@ -6,11 +6,13 @@ import pandas as pd
 import seaborn as sns
 from kan import *
 import time
+from sklearn.preprocessing import MinMaxScaler
 
 
 class KANModel():
-    def __init__(self, results_path=None, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01):
+    def __init__(self, results_path=None, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01, deepmimo=False):
         self.RESULTSPATH = results_path
+        self.deepmimo = deepmimo
         self.width = width
         self.grid = grid
         self.k = k
@@ -21,17 +23,26 @@ class KANModel():
         self.model = KAN(width=self.width, grid=self.grid, k=self.k, seed=self.seed)
 
     def load_data(self, data):
-        self.X_train =  data['train'][0][:,1].unsqueeze(1)          # get the y_noise
-        self.y_train = data['train'][1].unsqueeze(1)
-        self.X_validation =  data['validation'][0][:,1].unsqueeze(1) # get the y_noise
-        self.y_validation = data['validation'][1].unsqueeze(1)
-        self.X_test =  data['test'][0][:,1].unsqueeze(1)            # get the y_noise
-        self.y_test = data['test'][1].unsqueeze(1)
-        self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_validation, "test_label":self.y_validation}
+        if self.deepmimo:
+            self.X_train =  data['train'][0]           
+            self.y_train = data['train'][1]
+            self.X_validation =  data['test'][0]
+            self.y_validation = data['test'][1]
+            self.X_test =  data['test'][0]
+            self.y_test = data['test'][1]
+            self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_test, "test_label":self.y_test}
+        else:
+            self.X_train =  data['train'][0][:,1].unsqueeze(1)          # get the y_noise
+            self.y_train = data['train'][1].unsqueeze(1)
+            self.X_validation =  data['validation'][0][:,1].unsqueeze(1) # get the y_noise
+            self.y_validation = data['validation'][1].unsqueeze(1)
+            self.X_test =  data['test'][0][:,1].unsqueeze(1)            # get the y_noise
+            self.y_test = data['test'][1].unsqueeze(1)
+            self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_validation, "test_label":self.y_validation}
 
     def fit(self):
         start = time.time()
-        results = self.model.fit(self.dataset, opt="LBFGS", steps=50, lr=self.lr , lamb=self.lamb)
+        results = self.model.fit(self.dataset, opt="LBFGS", steps=10, lr=self.lr , lamb=self.lamb)
         end = time.time()
 
         elapsed_time = end - start
@@ -66,7 +77,6 @@ class KANModel():
         # plot true function
         plt.plot(x_all, y_true, "-",label='True function')
         
-        print(y_preds.shape)
         sorted_x, indices = torch.sort(x_values_samples, dim = 0)
         sorted_preds = y_preds[indices]
 
@@ -83,6 +93,40 @@ class KANModel():
             plt.savefig(f'{self.RESULTSPATH}/train_plot.png', dpi=300)
 
         plt.show()
+
+    def plot_deepmimo(self, data, y_preds, type_='test', save=False):
+
+        # mean all preds as the y_true is same for all
+        y_pred = torch.mean(y_preds, dim=0, keepdim=True)
+        print(y_pred.shape)
+        # Reshape to 64x64, discard the extra element
+        prediction_reshaped = y_pred[0,:].reshape(64, 64)
+        true_reshaped = data['test'][1][0,:].reshape(64, 64)
+
+        scaler = MinMaxScaler()
+        prediction_reshaped = scaler.fit_transform(prediction_reshaped)
+        true_reshaped = scaler.fit_transform(true_reshaped)
+
+
+        # Create a figure for the plots
+        fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+
+        # Plot the prediction heatmap
+        sns.heatmap(prediction_reshaped, ax=ax[0], cmap="viridis", cbar=True)
+        ax[0].set_title("Prediction Heatmap")
+
+        # Plot the true values heatmap
+        sns.heatmap(true_reshaped, ax=ax[1], cmap="viridis", cbar=True)
+        ax[1].set_title("True Values Heatmap")
+
+        # Adjust layout and display
+        plt.tight_layout()
+
+        if save:
+            plt.savefig(f'{self.RESULTSPATH}/pred_heatmap_plot.png', dpi=300)
+
+        plt.show()
+
 
 
     def plot_loss(self, loss_data, save=False):

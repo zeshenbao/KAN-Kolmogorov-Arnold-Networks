@@ -19,7 +19,7 @@ from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from MLP import MLP
 
 class MLPWrapper(BaseEstimator, RegressorMixin):
-    def __init__(self, data, input_size=1, hidden_sizes=[1], output_size=1, steps=800):
+    def __init__(self, data, input_size=1, hidden_sizes=[1], output_size=1, steps=800, deepmimo=False):
         """
         Initialize the MLP model with the desired hyperparameters.
 
@@ -28,21 +28,30 @@ class MLPWrapper(BaseEstimator, RegressorMixin):
         - hidden_sizes (list): Architecture hidden layer parameters.
         - output_size (int): Architecture output param.
         """
+        self.deepmimo = deepmimo
         self.data = data
         self.input_size = input_size
         self.hidden_sizes = hidden_sizes
         self.output_size = output_size
-        
         self.steps = steps
 
-        self.X_train =  self.data['train'][0][:,1].unsqueeze(1)           # get the y_noise
-        self.y_train = self.data['train'][1].unsqueeze(1)
-        self.X_validation =  self.data['validation'][0][:,1].unsqueeze(1) # get the y_noise
-        self.y_validation = self.data['validation'][1].unsqueeze(1)
-        self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_validation, "test_label":self.y_validation}
+        if self.deepmimo:
+            self.X_train =  self.data['train'][0]           
+            self.y_train = self.data['train'][1]
+            self.X_test =  self.data['test'][0]
+            self.y_test = self.data['test'][1]
+            self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_test, "test_label":self.y_test}
+
+
+        else:
+            self.X_train =  self.data['train'][0][:,1].unsqueeze(1)           # get the y_noise
+            self.y_train = self.data['train'][1].unsqueeze(1)
+            self.X_validation =  self.data['validation'][0][:,1].unsqueeze(1) # get the y_noise
+            self.y_validation = self.data['validation'][1].unsqueeze(1)
+            self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_validation, "test_label":self.y_validation}
 
         # Initialize the actual MLP model with the parameters
-        self.model = MLP(input_size=1, hidden_sizes=[1], output_size=1)
+        self.model = MLP(input_size=self.input_size, hidden_sizes=self.hidden_sizes, output_size=self.output_size)
 
     def fit(self, X, y):
         """
@@ -54,7 +63,7 @@ class MLPWrapper(BaseEstimator, RegressorMixin):
         """
         X_ = torch.tensor(X).float()
         y_ = torch.tensor(y).float()
-        self.model.fit(X_, y_, n_epochs=self.steps, cross_validation=True)
+        self.model.fit(X_, y_, n_epochs=self.steps, cross_validation=True, deepmimo=self.deepmimo)
         return self
 
     def predict(self, X):
@@ -81,7 +90,8 @@ class MLPWrapper(BaseEstimator, RegressorMixin):
             'input_size': self.input_size,
             'hidden_sizes': self.hidden_sizes,
             'output_size': self.output_size,
-            'steps': self.steps
+            'steps': self.steps,
+            'deepmimo': self.deepmimo
         }
 
     def set_params(self, **parameters):

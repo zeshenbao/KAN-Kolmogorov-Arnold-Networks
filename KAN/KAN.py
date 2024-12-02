@@ -15,13 +15,12 @@ from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(device)
 
 torch.manual_seed(0)
 
 class KANWrapper(BaseEstimator, RegressorMixin):
 
-    def __init__(self, data=None, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01):
+    def __init__(self, data=None, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01, deepmimo=False):
         """
         Initialize the KAN model with the desired hyperparameters.
 
@@ -31,6 +30,7 @@ class KANWrapper(BaseEstimator, RegressorMixin):
         - k (int): Parameter k.
         - seed (int): Random seed.
         """
+        self.deepmimo = deepmimo
         self.data = data
         self.width = width
         self.grid = grid
@@ -38,11 +38,20 @@ class KANWrapper(BaseEstimator, RegressorMixin):
         self.seed = seed
         self.lr = lr 
         self.lamb = lamb
-        self.X_train =  self.data['train'][0][:,1].unsqueeze(1)           # get the y_noise
-        self.y_train = self.data['train'][1].unsqueeze(1)
-        self.X_validation =  self.data['validation'][0][:,1].unsqueeze(1) # get the y_noise
-        self.y_validation = self.data['validation'][1].unsqueeze(1)
-        self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_validation, "test_label":self.y_validation}
+
+        if self.deepmimo:
+            self.X_train =  self.data['train'][0]           
+            self.y_train = self.data['train'][1]
+            self.X_test =  self.data['test'][0]
+            self.y_test = self.data['test'][1]
+            self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_test, "test_label":self.y_test}
+
+        else:
+            self.X_train =  self.data['train'][0][:,1].unsqueeze(1)           # get the y_noise
+            self.y_train = self.data['train'][1].unsqueeze(1)
+            self.X_validation =  self.data['validation'][0][:,1].unsqueeze(1) # get the y_noise
+            self.y_validation = self.data['validation'][1].unsqueeze(1)
+            self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_validation, "test_label":self.y_validation}
 
         
         # Initialize the actual KAN model with the parameters
@@ -89,6 +98,7 @@ class KANWrapper(BaseEstimator, RegressorMixin):
             'seed': self.seed,
             'lr': self.lr,
             'lamb': self.lamb,
+            'deepmimo': self.deepmimo
         }
     
 

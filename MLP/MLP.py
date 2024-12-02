@@ -8,6 +8,8 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
+
 
 class MLP(nn.Module):
     """Creates a Multilayer Perceptron."""
@@ -35,14 +37,24 @@ class MLP(nn.Module):
         self.loss_list = list()
         self.val_loss_list = list()
         
-    def load_data(self, data):
-        self.X_train =  data['train'][0][:,1].unsqueeze(1)          # get the y_noise
-        self.y_train = data['train'][1].unsqueeze(1)
-        self.X_validation =  data['validation'][0][:,1].unsqueeze(1) # get the y_noise
-        self.y_validation = data['validation'][1].unsqueeze(1)
-        self.X_test =  data['test'][0][:,1].unsqueeze(1)            # get the y_noise
-        self.y_test = data['test'][1].unsqueeze(1)
-        self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_test, "test_label":self.y_test}
+    def load_data(self, data, deepmimo=False):
+        if deepmimo:
+            self.X_train =  data['train'][0]           
+            self.y_train = data['train'][1]
+            self.X_validation = data['test'][0]
+            self.y_validation = data['test'][1]
+            self.X_test =  data['test'][0]
+            self.y_test = data['test'][1]
+            self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_test, "test_label":self.y_test}
+
+        else:
+            self.X_train =  data['train'][0][:,1].unsqueeze(1)              # get the y_noise
+            self.y_train = data['train'][1].unsqueeze(1)
+            self.X_validation =  data['validation'][0][:,1].unsqueeze(1)    # get the y_noise
+            self.y_validation = data['validation'][1].unsqueeze(1)
+            self.X_test =  data['test'][0][:,1].unsqueeze(1)                # get the y_noise
+            self.y_test = data['test'][1].unsqueeze(1)
+            self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_test, "test_label":self.y_test}
 
     
     def forward(self, x):
@@ -67,7 +79,7 @@ class MLP(nn.Module):
                 return self(X_tensor)
 
     
-    def fit(self, X, y, n_epochs, cross_validation=False):
+    def fit(self, X, y, n_epochs, cross_validation=False, deepmimo=False):
         # Training
         start = time.time()
         
@@ -143,8 +155,41 @@ class MLP(nn.Module):
 
         plt.show()
 
+    def plot_deepmimo(self, data, y_preds, type_='test', save=False):
 
-    def plot_loss(self, loss_data, save=False):
+        # mean all preds as the y_true is same for all
+        y_pred = torch.mean(y_preds, dim=0, keepdim=True)
+        print(y_pred.shape)
+        # Reshape to 64x64, discard the extra element
+        prediction_reshaped = y_pred[0,:].reshape(64, 64)
+        true_reshaped = data['test'][1][0,:].reshape(64, 64)
+
+        scaler = MinMaxScaler()
+        prediction_reshaped = scaler.fit_transform(prediction_reshaped)
+        true_reshaped = scaler.fit_transform(true_reshaped)
+
+
+        # Create a figure for the plots
+        fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+
+        # Plot the prediction heatmap
+        sns.heatmap(prediction_reshaped, ax=ax[0], cmap="viridis", cbar=True)
+        ax[0].set_title("Prediction Heatmap")
+
+        # Plot the true values heatmap
+        sns.heatmap(true_reshaped, ax=ax[1], cmap="viridis", cbar=True)
+        ax[1].set_title("True Values Heatmap")
+
+        # Adjust layout and display
+        plt.tight_layout()
+
+        if save:
+            plt.savefig(f'{self.RESULTSPATH}/pred_heatmap_plot.png', dpi=300)
+
+        plt.show()
+
+
+    def plot_loss(self, loss_data, save=False,deepmimo=False):
         """
         Plot the training and validation loss over epochs.
         """
