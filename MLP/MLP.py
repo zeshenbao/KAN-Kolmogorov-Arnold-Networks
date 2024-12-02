@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
+import numpy as np
 
 
 class MLP(nn.Module):
@@ -157,12 +158,13 @@ class MLP(nn.Module):
 
     def plot_deepmimo(self, data, y_preds, type_='test', save=False):
 
+        reshape_dim = int(np.sqrt(y_preds.shape[1]))
         # mean all preds as the y_true is same for all
         y_pred = torch.mean(y_preds, dim=0, keepdim=True)
         print(y_pred.shape)
         # Reshape to 64x64, discard the extra element
-        prediction_reshaped = y_pred[0,:].reshape(64, 64)
-        true_reshaped = data['test'][1][0,:].reshape(64, 64)
+        prediction_reshaped = y_pred[0,:].reshape(reshape_dim, reshape_dim)
+        true_reshaped = data['test'][1][0,:].reshape(reshape_dim, reshape_dim)
 
         scaler = MinMaxScaler()
         prediction_reshaped = scaler.fit_transform(prediction_reshaped)
