@@ -131,17 +131,17 @@ class MLP(nn.Module):
 
         plt.figure(figsize=(8,6))
 
-        # Set global font size and improve readability
+        # Set font size, grid, etc.
         plt.rcParams.update({
             'font.size': 15,
             'axes.labelsize': 15,
             'axes.titlesize': 15,
             'legend.fontsize': 15,
-            'axes.grid': True,  # Enable grid globally
-            'grid.alpha': 0.3,   # Make grid lines subtle
-            'axes.linewidth': 1.5,  # Thicker axis lines
-            'xtick.major.width': 1.5, # Thicker x-tick lines
-            'ytick.major.width': 1.5, # Thicker y-tick lines
+            'axes.grid': True,
+            'grid.alpha': 0.3,
+            'axes.linewidth': 1.5,
+            'xtick.major.width': 1.5,
+            'ytick.major.width': 1.5,
         })
 
         #sns.set_theme(style="whitegrid")
@@ -186,11 +186,11 @@ class MLP(nn.Module):
             'axes.labelsize': 15,
             'axes.titlesize': 15,
             'legend.fontsize': 15,
-            'axes.grid': True,  # Enable grid globally
-            'grid.alpha': 0.3,   # Make grid lines subtle
-            'axes.linewidth': 1.5,  # Thicker axis lines
-            'xtick.major.width': 1.5, # Thicker x-tick lines
-            'ytick.major.width': 1.5, # Thicker y-tick lines
+            'axes.grid': True,
+            'grid.alpha': 0.3,
+            'axes.linewidth': 1.5,
+            'xtick.major.width': 1.5,
+            'ytick.major.width': 1.5,
         })
 
 
@@ -237,11 +237,11 @@ class MLP(nn.Module):
             'axes.labelsize': 15,
             'axes.titlesize': 15,
             'legend.fontsize': 15,
-            'axes.grid': True,  # Enable grid globally
-            'grid.alpha': 0.3,   # Make grid lines subtle
-            'axes.linewidth': 1.5,  # Thicker axis lines
-            'xtick.major.width': 1.5, # Thicker x-tick lines
-            'ytick.major.width': 1.5, # Thicker y-tick lines
+            'axes.grid': True,
+            'grid.alpha': 0.3,
+            'axes.linewidth': 1.5,
+            'xtick.major.width': 1.5,
+            'ytick.major.width': 1.5,
         })
 
         # Define colors using viridis
