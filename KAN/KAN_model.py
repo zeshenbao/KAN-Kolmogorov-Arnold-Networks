@@ -10,7 +10,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 
 class KANModel():
-    def __init__(self, results_path=None, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01, deepmimo=False, epochs=100):
+    def __init__(self, results_path=None, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01, deepmimo=False, epochs=201):
         self.RESULTSPATH = results_path
         self.deepmimo = deepmimo
         self.width = width
@@ -106,6 +106,7 @@ class KANModel():
         plt.plot(sorted_x, sorted_preds, label='KAN predictions', color=predicted_function_color, linestyle="--", linewidth=3, zorder=3)
 
         plt.grid(True, zorder=0, alpha=0.5)
+        #plt.ylim(-2, 2)
         plt.xlabel("x")
         plt.ylabel("y")
         plt.legend(loc='upper right')
@@ -113,6 +114,7 @@ class KANModel():
         plt.tight_layout()
 
         if save:
+            os.makedirs(self.RESULTSPATH, exist_ok=True)
             plt.savefig(f'{self.RESULTSPATH}/train_plot.png', dpi=300)
 
         plt.show()
@@ -146,10 +148,10 @@ class KANModel():
         prediction_reshaped = scaler.fit_transform(prediction_reshaped)
         true_reshaped = scaler.fit_transform(true_reshaped)
 
-
+        
         # Create a figure for the plots
         fig, ax = plt.subplots(1, 2, figsize=(12, 6))
-
+        
         # Plot the prediction heatmap
         sns.heatmap(prediction_reshaped, ax=ax[0], cmap="viridis", cbar=True)
         ax[0].set_title("Prediction Heatmap")
@@ -162,6 +164,7 @@ class KANModel():
         plt.tight_layout()
 
         if save:
+            os.makedirs(self.RESULTSPATH, exist_ok=True)
             plt.savefig(f'{self.RESULTSPATH}/pred_heatmap_plot.png', dpi=300)
 
         plt.show()
@@ -197,10 +200,15 @@ class KANModel():
             'Validation Loss': loss_data['test_loss']
         })
 
+        plt.grid(True, zorder=0, alpha=0.5)
+
         # Ensure correct data types
         loss_df['Epoch'] = loss_df['Epoch'].astype(int)
         loss_df['Train Loss'] = loss_df['Train Loss'].astype(float)
         loss_df['Validation Loss'] = loss_df['Validation Loss'].astype(float)
+
+        self.train_loss = loss_df['Train Loss']
+        self.val_loss = loss_df['Validation Loss']
         
         # Melt the DataFrame for easier plotting with Seaborn
         loss_melted = loss_df.melt(id_vars='Epoch', var_name='Loss Type', value_name='Loss')
@@ -222,8 +230,10 @@ class KANModel():
         plt.tight_layout()
 
         if save:
-            plt.savefig('../results/loss.png', dpi=300)
+            os.makedirs(self.RESULTSPATH, exist_ok=True)
+            plt.savefig(f'{self.RESULTSPATH}/loss.png', dpi=300)
             print("saved loss to ", f'{ self.RESULTSPATH}/loss.png')
+            self.write_params_to_file()
 
         plt.show()
 
@@ -243,6 +253,8 @@ class KANModel():
             file.write(f"seed: {self.seed}\n")
             file.write(f"lr: {self.lr}\n")
             file.write(f"lamb: {self.lamb}\n")
+            file.write(f"final validation loss: {self.val_loss.iloc[-1]}\n")
+            file.write(f"final training loss: {self.train_loss.iloc[-1]}\n")
                  # Write extra parameters if provided
             if extra_params:
                 for key, value in extra_params.items():

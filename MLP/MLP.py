@@ -10,6 +10,7 @@ import seaborn as sns
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
+import os
 
 
 class MLP(nn.Module):
@@ -179,6 +180,7 @@ class MLP(nn.Module):
         plt.tight_layout()
 
         if save:
+            os.makedirs(self.RESULTSPATH, exist_ok=True)
             plt.savefig(f'{self.RESULTSPATH}/train_plot.png', dpi=300)
 
         plt.show()
@@ -227,6 +229,7 @@ class MLP(nn.Module):
         plt.tight_layout()
 
         if save:
+            os.makedirs(self.RESULTSPATH, exist_ok=True)
             plt.savefig(f'{self.RESULTSPATH}/pred_heatmap_plot.png', dpi=300)
 
         plt.show()
@@ -265,10 +268,15 @@ class MLP(nn.Module):
         loss_df['Epoch'] = loss_df['Epoch'].astype(int)
         loss_df['Train Loss'] = loss_df['Train Loss'].astype(float)
         loss_df['Validation Loss'] = loss_df['Validation Loss'].astype(float)
+
+
+        self.val_loss = loss_df['Validation Loss']
+        self.train_loss = loss_df['Train Loss']
         
         # Melt the DataFrame for easier plotting with Seaborn
         #loss_melted = loss_df.melt(id_vars='Epoch', var_name='Loss Type', value_name='Loss')
 
+        plt.grid(True, zorder=0, alpha=0.5)
         # Line plot for training and validation loss
         #sns.lineplot(data=loss_melted, x='Epoch', y='Loss', hue='Loss Type')
         plt.plot(loss_df['Epoch'], loss_df['Train Loss'], label='Train loss', color=loss_color_1, linewidth=3, zorder=3, linestyle='--')
@@ -286,8 +294,10 @@ class MLP(nn.Module):
         plt.tight_layout()
 
         if save:
+            os.makedirs(self.RESULTSPATH, exist_ok=True)
             plt.savefig(f'{self.RESULTSPATH}/loss.png', dpi=300)
             print("saved loss to ", f'{self.RESULTSPATH}/loss.png')
+            self.write_params_to_file()
 
         plt.show()
 
@@ -300,6 +310,8 @@ class MLP(nn.Module):
             file.write(f"input size: {self.input_size}\n")
             file.write(f"hidden-layers: {self.hidden_sizes}\n")
             file.write(f"output size: {self.output_size}\n")
+            file.write(f"final validation loss: {self.val_loss.iloc[-1]}\n")
+            file.write(f"final training loss: {self.train_loss.iloc[-1]}\n")
 
         if extra_params:
             with open(file_path, "a") as file:

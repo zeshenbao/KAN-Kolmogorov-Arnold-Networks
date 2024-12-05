@@ -20,7 +20,7 @@ torch.manual_seed(0)
 
 class KANWrapper(BaseEstimator, RegressorMixin):
 
-    def __init__(self, data=None, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01, deepmimo=False, epochs=100):
+    def __init__(self, data=None, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01, deepmimo=False, epochs=1):
         """
         Initialize the KAN model with the desired hyperparameters.
 
