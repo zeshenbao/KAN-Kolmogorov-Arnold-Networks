@@ -65,9 +65,19 @@ class KANWrapper(BaseEstimator, RegressorMixin):
 
         Parameters:
         """
+
         _dataset = self.dataset
-        _dataset['train_input'] = torch.tensor(X).float()
-        _dataset['train_label'] = torch.tensor(y).float()
+        if isinstance(X, torch.Tensor):
+            _dataset['train_input'] = X.clone().detach().float() #X.clone().detach().float()#torch.tensor(X).float()
+        else:
+            _dataset['train_input'] = torch.tensor(X).float()
+
+        if isinstance(y, torch.Tensor):
+            _dataset['train_label'] = y.clone().detach().float() #y.clone().detach().float()#torch.tensor(y).float()
+
+        else:
+            _dataset['train_input'] = torch.tensor(y).float()
+        
         self.model.fit(_dataset, opt="LBFGS", steps=self.epochs, lr=self.lr, lamb=self.lamb)
         return self
 
@@ -117,5 +127,5 @@ class KANWrapper(BaseEstimator, RegressorMixin):
             setattr(self, parameter, value)
         
         # Re-initialize the model with updated parameters
-        self.model = KAN(width=self.width, grid=self.grid, k=self.k, seed=self.seed)
+        self.model = KAN(width=self.width, grid=self.grid, k=self.k, seed=self.seed, auto_save=False)
         return self
