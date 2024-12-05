@@ -10,7 +10,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 
 class KANModel():
-    def __init__(self, results_path=None, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01, deepmimo=False, steps=1000):
+    def __init__(self, results_path=None, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01, deepmimo=False, epochs=100):
         self.RESULTSPATH = results_path
         self.deepmimo = deepmimo
         self.width = width
@@ -19,7 +19,7 @@ class KANModel():
         self.seed = seed
         self.lr = lr 
         self.lamb = lamb
-        self.steps = steps
+        self.epochs = epochs
 
         self.model = KAN(width=self.width, grid=self.grid, k=self.k, seed=self.seed)
 
@@ -43,7 +43,7 @@ class KANModel():
 
     def fit(self):
         start = time.time()
-        results = self.model.fit(self.dataset, opt="LBFGS", steps=self.steps, lr=self.lr , lamb=self.lamb)
+        results = self.model.fit(self.dataset, opt="LBFGS", steps=self.epochs, lr=self.lr, lamb=self.lamb)
         end = time.time()
 
         elapsed_time = end - start

@@ -15,7 +15,7 @@ import numpy as np
 class MLP(nn.Module):
     """Creates a Multilayer Perceptron."""
 
-    def __init__(self, result_path=None, input_size=1, hidden_sizes=[1], output_size=1):
+    def __init__(self, result_path=None, input_size=1, hidden_sizes=[1], output_size=1, lr=0.001):
         super(MLP, self).__init__()
         self.layers = list()
         self.RESULTSPATH = result_path
@@ -24,6 +24,7 @@ class MLP(nn.Module):
         self.input_size = input_size
         self.hidden_sizes = hidden_sizes
         self.output_size = output_size
+        self.lr = lr
 
         for h_size in hidden_sizes:
             self.layers.append(nn.Linear(i_size, h_size))
@@ -32,7 +33,7 @@ class MLP(nn.Module):
         
         self.layers.append(nn.Linear(i_size, output_size))
         self.layers = nn.Sequential(*self.layers)
-        self.optimizer = optim.LBFGS(self.parameters(), lr=0.01)  # Adam optimzier. Alternatively: optim.STD (Stochastic Gradient Descent)
+        self.optimizer = optim.LBFGS(self.parameters(), lr=self.lr)  # Adam optimzier. Alternatively: optim.STD (Stochastic Gradient Descent)
         self.loss_function = nn.MSELoss()  # Mean Squared Error Loss. Alteratively: L1Loss, CrossEntropyLoss
         self.epoch_list = list()
         self.loss_list = list()
@@ -84,7 +85,7 @@ class MLP(nn.Module):
         # Training
         start = time.time()
         
-        for epoch in tqdm(range(1, n_epochs)):
+        for epoch in tqdm(range(1, n_epochs+1)):
             # Set model to training mode
             self.train()
 

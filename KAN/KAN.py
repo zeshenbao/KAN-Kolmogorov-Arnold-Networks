@@ -38,7 +38,7 @@ class KANWrapper(BaseEstimator, RegressorMixin):
         self.seed = seed
         self.lr = lr 
         self.lamb = lamb
-        self.epochs=epochs
+        self.epochs = epochs
 
         if self.deepmimo:
             self.X_train =  self.data['train'][0]           
@@ -56,7 +56,7 @@ class KANWrapper(BaseEstimator, RegressorMixin):
 
         
         # Initialize the actual KAN model with the parameters
-        self.model = KAN(width=self.width, grid=self.grid, k=self.k, seed=self.seed)
+        self.model = KAN(width=self.width, grid=self.grid, k=self.k, seed=self.seed, auto_save=False)
 
         
     def fit(self, X, y):
