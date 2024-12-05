@@ -32,7 +32,7 @@ class MLP(nn.Module):
         
         self.layers.append(nn.Linear(i_size, output_size))
         self.layers = nn.Sequential(*self.layers)
-        self.optimizer = optim.Adam(self.parameters(), lr=0.01)  # Adam optimzier. Alternatively: optim.STD (Stochastic Gradient Descent)
+        self.optimizer = optim.LBFGS(self.parameters(), lr=0.01)  # Adam optimzier. Alternatively: optim.STD (Stochastic Gradient Descent)
         self.loss_function = nn.MSELoss()  # Mean Squared Error Loss. Alteratively: L1Loss, CrossEntropyLoss
         self.epoch_list = list()
         self.loss_list = list()
@@ -88,19 +88,23 @@ class MLP(nn.Module):
             # Set model to training mode
             self.train()
 
-            self.optimizer.zero_grad()
+            def closure():
+
+                self.optimizer.zero_grad()
 
             # Forward pass
-            output = self.forward(X)
+                output = self.forward(X)
 
             # Compute loss
-            loss = torch.sqrt(self.loss_function(output, y)) # sqrt to get RMSE instead of MSE
+                loss = torch.sqrt(self.loss_function(output, y)) # sqrt to get RMSE instead of MSE
 
             # Backward pass
-            loss.backward()
+                loss.backward()
+
+                return loss
 
             # Optimize model parameters
-            self.optimizer.step()
+            loss = self.optimizer.step(closure)
 
             # Save data
             self.epoch_list.append(epoch)

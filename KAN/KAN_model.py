@@ -10,7 +10,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 
 class KANModel():
-    def __init__(self, results_path=None, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01, deepmimo=False,steps=10):
+    def __init__(self, results_path=None, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01, deepmimo=False, steps=1000):
         self.RESULTSPATH = results_path
         self.deepmimo = deepmimo
         self.width = width

@@ -20,7 +20,7 @@ torch.manual_seed(0)
 
 class KANWrapper(BaseEstimator, RegressorMixin):
 
-    def __init__(self, data=None, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01, deepmimo=False):
+    def __init__(self, data=None, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01, deepmimo=False, epochs=100):
         """
         Initialize the KAN model with the desired hyperparameters.
 
@@ -38,6 +38,7 @@ class KANWrapper(BaseEstimator, RegressorMixin):
         self.seed = seed
         self.lr = lr 
         self.lamb = lamb
+        self.epochs=epochs
 
         if self.deepmimo:
             self.X_train =  self.data['train'][0]           
@@ -67,7 +68,7 @@ class KANWrapper(BaseEstimator, RegressorMixin):
         _dataset = self.dataset
         _dataset['train_input'] = torch.tensor(X).float()
         _dataset['train_label'] = torch.tensor(y).float()
-        self.model.fit(_dataset, opt="LBFGS", steps=50, lr=self.lr, lamb=self.lamb)
+        self.model.fit(_dataset, opt="LBFGS", steps=self.epochs, lr=self.lr, lamb=self.lamb)
         return self
 
     def predict(self, X):
