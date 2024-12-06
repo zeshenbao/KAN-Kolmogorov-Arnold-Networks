@@ -19,7 +19,7 @@ from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from MLP import MLP
 
 class MLPWrapper(BaseEstimator, RegressorMixin):
-    def __init__(self, data, input_size=1, hidden_sizes=[1], output_size=1, steps=800, deepmimo=False):
+    def __init__(self, data, input_size=1, hidden_sizes=[1], output_size=1, epochs=100, deepmimo=False, lr=0.001):
         """
         Initialize the MLP model with the desired hyperparameters.
 
@@ -33,7 +33,8 @@ class MLPWrapper(BaseEstimator, RegressorMixin):
         self.input_size = input_size
         self.hidden_sizes = hidden_sizes
         self.output_size = output_size
-        self.steps = steps
+        self.epochs = epochs
+        self.lr = lr
 
         if self.deepmimo:
             self.X_train =  self.data['train'][0]           
@@ -51,7 +52,7 @@ class MLPWrapper(BaseEstimator, RegressorMixin):
             self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_validation, "test_label":self.y_validation}
 
         # Initialize the actual MLP model with the parameters
-        self.model = MLP(input_size=self.input_size, hidden_sizes=self.hidden_sizes, output_size=self.output_size)
+        self.model = MLP(input_size=self.input_size, hidden_sizes=self.hidden_sizes, output_size=self.output_size, lr=self.lr)
 
     def fit(self, X, y):
         """
@@ -63,7 +64,7 @@ class MLPWrapper(BaseEstimator, RegressorMixin):
         """
         X_ = torch.tensor(X).float()
         y_ = torch.tensor(y).float()
-        self.model.fit(X_, y_, n_epochs=self.steps, cross_validation=True, deepmimo=self.deepmimo)
+        self.model.fit(X_, y_, n_epochs=self.epochs, cross_validation=True, deepmimo=self.deepmimo)
         return self
 
     def predict(self, X):
@@ -90,7 +91,7 @@ class MLPWrapper(BaseEstimator, RegressorMixin):
             'input_size': self.input_size,
             'hidden_sizes': self.hidden_sizes,
             'output_size': self.output_size,
-            'steps': self.steps,
+            'epochs': self.epochs,
             'deepmimo': self.deepmimo
         }
 

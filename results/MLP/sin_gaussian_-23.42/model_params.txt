@@ -1,0 +1,5 @@
+input size: 1
+hidden-layers: [5, 5, 5]
+output size: 1
+final validation loss: 0.7026141285896301
+final training loss: 0.6943458318710327

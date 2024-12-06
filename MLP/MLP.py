@@ -10,12 +10,13 @@ import seaborn as sns
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
+import os
 
 
 class MLP(nn.Module):
     """Creates a Multilayer Perceptron."""
 
-    def __init__(self, result_path=None, input_size=1, hidden_sizes=[1], output_size=1):
+    def __init__(self, result_path=None, input_size=1, hidden_sizes=[1], output_size=1, lr=0.001):
         super(MLP, self).__init__()
         self.layers = list()
         self.RESULTSPATH = result_path
@@ -24,6 +25,7 @@ class MLP(nn.Module):
         self.input_size = input_size
         self.hidden_sizes = hidden_sizes
         self.output_size = output_size
+        self.lr = lr
 
         for h_size in hidden_sizes:
             self.layers.append(nn.Linear(i_size, h_size))
@@ -32,7 +34,7 @@ class MLP(nn.Module):
         
         self.layers.append(nn.Linear(i_size, output_size))
         self.layers = nn.Sequential(*self.layers)
-        self.optimizer = optim.Adam(self.parameters(), lr=0.01)  # Adam optimzier. Alternatively: optim.STD (Stochastic Gradient Descent)
+        self.optimizer = optim.LBFGS(self.parameters(), lr=self.lr)  # Adam optimzier. Alternatively: optim.STD (Stochastic Gradient Descent)
         self.loss_function = nn.MSELoss()  # Mean Squared Error Loss. Alteratively: L1Loss, CrossEntropyLoss
         self.epoch_list = list()
         self.loss_list = list()
@@ -84,23 +86,27 @@ class MLP(nn.Module):
         # Training
         start = time.time()
         
-        for epoch in tqdm(range(1, n_epochs)):
+        for epoch in tqdm(range(1, n_epochs+1)):
             # Set model to training mode
             self.train()
 
-            self.optimizer.zero_grad()
+            def closure():
+
+                self.optimizer.zero_grad()
 
             # Forward pass
-            output = self.forward(X)
+                output = self.forward(X)
 
             # Compute loss
-            loss = torch.sqrt(self.loss_function(output, y)) # sqrt to get RMSE instead of MSE
+                loss = torch.sqrt(self.loss_function(output, y)) # sqrt to get RMSE instead of MSE
 
             # Backward pass
-            loss.backward()
+                loss.backward()
+
+                return loss
 
             # Optimize model parameters
-            self.optimizer.step()
+            loss = self.optimizer.step(closure)
 
             # Save data
             self.epoch_list.append(epoch)
@@ -123,40 +129,77 @@ class MLP(nn.Module):
         """
         Plot predictions made by the model.
         """
-        sns.set_theme(style="whitegrid")
+        # Define colors
+        viridis = plt.cm.viridis
+        data_point_color = viridis(0.5)
+        true_function_color = viridis(0.8)
+        predicted_function_color = viridis(0.2)
+
+        plt.figure(figsize=(8,6))
+
+        # Set font size, grid, etc.
+        plt.rcParams.update({
+            'font.size': 15,
+            'axes.labelsize': 15,
+            'axes.titlesize': 15,
+            'legend.fontsize': 15,
+            'axes.grid': True,
+            'grid.alpha': 0.3,
+            'axes.linewidth': 1.5,
+            'xtick.major.width': 1.5,
+            'ytick.major.width': 1.5,
+        })
+
+        #sns.set_theme(style="whitegrid")
 
         # samples
         x_values_samples = data[type_][0][:,0]
         y_noise = data[type_][0][:,1]
 
         # plot noisy datapoints
-        plt.plot(x_values_samples, y_noise, "o", markersize=1, linestyle='None', label=f"{type_} data")
+        plt.scatter(x_values_samples, y_noise, label=f"{type_} data".capitalize(), color=data_point_color, alpha=0.8, s=70, zorder=3, marker='.', linestyle='None')
     
         # all data points
         x_all = data['true'][0][:,0]
         y_true = data['true'][1]
         
         # plot true function
-        plt.plot(x_all, y_true, "-",label='True function')
+        plt.plot(x_all, y_true, "-", label='True function', color=true_function_color, linewidth=3, zorder=3)
         
         sorted_x, indices = torch.sort(x_values_samples, dim = 0)
         sorted_preds = y_preds[indices]
 
         # plot the predictions
-        plt.plot(sorted_x, sorted_preds, "--", label='MLP predictions')
+        plt.plot(sorted_x, sorted_preds, label='MLP predictions', color=predicted_function_color, linestyle="--", linewidth=3, zorder=3)
 
-        plt.xlabel("Random X 1D samples")
-        plt.ylabel("Function")
-        plt.legend()
-        plt.title("Prediction using MLP", fontsize=14, weight='bold')
+        plt.grid(True, zorder=0, alpha=0.5)
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.legend(loc='upper right')
+        #plt.title("Prediction using MLP", fontsize=14, weight='bold')
         plt.tight_layout()
 
         if save:
+            os.makedirs(self.RESULTSPATH, exist_ok=True)
             plt.savefig(f'{self.RESULTSPATH}/train_plot.png', dpi=300)
 
         plt.show()
 
     def plot_deepmimo(self, data, y_preds, type_='test', save=False):
+
+        # Set font size, grid, etc.
+        plt.rcParams.update({
+            'font.size': 15,
+            'axes.labelsize': 15,
+            'axes.titlesize': 15,
+            'legend.fontsize': 15,
+            'axes.grid': True,
+            'grid.alpha': 0.3,
+            'axes.linewidth': 1.5,
+            'xtick.major.width': 1.5,
+            'ytick.major.width': 1.5,
+        })
+
 
         reshape_dim = int(np.sqrt(y_preds.shape[1]))
         # mean all preds as the y_true is same for all
@@ -186,6 +229,7 @@ class MLP(nn.Module):
         plt.tight_layout()
 
         if save:
+            os.makedirs(self.RESULTSPATH, exist_ok=True)
             plt.savefig(f'{self.RESULTSPATH}/pred_heatmap_plot.png', dpi=300)
 
         plt.show()
@@ -195,6 +239,24 @@ class MLP(nn.Module):
         """
         Plot the training and validation loss over epochs.
         """
+        # Set font size, grid, etc.
+        plt.rcParams.update({
+            'font.size': 15,
+            'axes.labelsize': 15,
+            'axes.titlesize': 15,
+            'legend.fontsize': 15,
+            'axes.grid': True,
+            'grid.alpha': 0.3,
+            'axes.linewidth': 1.5,
+            'xtick.major.width': 1.5,
+            'ytick.major.width': 1.5,
+        })
+
+        # Define colors using viridis
+        viridis = plt.cm.viridis
+        loss_color_1 = viridis(0.5)
+        loss_color_2 = viridis(0.2)
+
         # Convert loss data to a DataFrame for Seaborn
         loss_df = pd.DataFrame({
             'Epoch': range(1, len(loss_data['train_loss']) + 1),
@@ -206,27 +268,36 @@ class MLP(nn.Module):
         loss_df['Epoch'] = loss_df['Epoch'].astype(int)
         loss_df['Train Loss'] = loss_df['Train Loss'].astype(float)
         loss_df['Validation Loss'] = loss_df['Validation Loss'].astype(float)
+
+
+        self.val_loss = loss_df['Validation Loss']
+        self.train_loss = loss_df['Train Loss']
         
         # Melt the DataFrame for easier plotting with Seaborn
-        loss_melted = loss_df.melt(id_vars='Epoch', var_name='Loss Type', value_name='Loss')
+        #loss_melted = loss_df.melt(id_vars='Epoch', var_name='Loss Type', value_name='Loss')
 
+        plt.grid(True, zorder=0, alpha=0.5)
         # Line plot for training and validation loss
-        sns.lineplot(data=loss_melted, x='Epoch', y='Loss', hue='Loss Type')
+        #sns.lineplot(data=loss_melted, x='Epoch', y='Loss', hue='Loss Type')
+        plt.plot(loss_df['Epoch'], loss_df['Train Loss'], label='Train loss', color=loss_color_1, linewidth=3, zorder=3, linestyle='--')
+        plt.plot(loss_df['Epoch'], loss_df['Validation Loss'], label='Validation loss', color=loss_color_2, linewidth=3, zorder=3)
 
         # Set labels and title
-        plt.xlabel("Epoch", fontsize=12)
-        plt.ylabel("Loss", fontsize=12)
-        plt.title("Training and Validation Loss Over Epochs", fontsize=14, weight='bold')
+        plt.xlabel("Epoch")
+        plt.ylabel("Loss")
+        #plt.title("Training and Validation Loss Over Epochs", fontsize=14, weight='bold')
 
         # Customize legend
-        plt.legend(title='Loss Type', fontsize=10, title_fontsize=12)
+        plt.legend(loc='upper right')
 
         # Adjust layout for better spacing
         plt.tight_layout()
 
         if save:
+            os.makedirs(self.RESULTSPATH, exist_ok=True)
             plt.savefig(f'{self.RESULTSPATH}/loss.png', dpi=300)
             print("saved loss to ", f'{self.RESULTSPATH}/loss.png')
+            self.write_params_to_file()
 
         plt.show()
 
@@ -239,6 +310,8 @@ class MLP(nn.Module):
             file.write(f"input size: {self.input_size}\n")
             file.write(f"hidden-layers: {self.hidden_sizes}\n")
             file.write(f"output size: {self.output_size}\n")
+            file.write(f"final validation loss: {self.val_loss.iloc[-1]}\n")
+            file.write(f"final training loss: {self.train_loss.iloc[-1]}\n")
 
         if extra_params:
             with open(file_path, "a") as file:
