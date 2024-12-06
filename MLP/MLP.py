@@ -185,7 +185,7 @@ class MLP(nn.Module):
 
         plt.show()
 
-    def plot_deepmimo(self, data, y_preds, type_='test', save=False):
+    def plot_deepmimo(self, pred_sample=None, true_sample=None, save=False):
 
         # Set font size, grid, etc.
         plt.rcParams.update({
@@ -201,17 +201,25 @@ class MLP(nn.Module):
         })
 
 
-        reshape_dim = int(np.sqrt(y_preds.shape[1]))
-        # mean all preds as the y_true is same for all
-        y_pred = torch.mean(y_preds, dim=0, keepdim=True)
-        print(y_pred.shape)
-        # Reshape to 64x64, discard the extra element
-        prediction_reshaped = y_pred[0,:].reshape(reshape_dim, reshape_dim)
-        true_reshaped = data['test'][1][0,:].reshape(reshape_dim, reshape_dim)
+        reshape_dim = int(np.sqrt(pred_sample.shape[0]))
+        y_pred = pred_sample
+        prediction_reshaped = torch.rot90(y_pred.reshape(reshape_dim, reshape_dim), k=1, dims=(0,1))
+        true_reshaped = torch.rot90(true_sample.reshape(reshape_dim, reshape_dim), k=1, dims=(0,1))
 
-        scaler = MinMaxScaler()
-        prediction_reshaped = scaler.fit_transform(prediction_reshaped)
-        true_reshaped = scaler.fit_transform(true_reshaped)
+        # Create a figure for the plots
+        fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+        
+        # Plot the prediction heatmap
+        sns.heatmap(prediction_reshaped, ax=ax[0], cmap="viridis", cbar=True)
+        ax[0].set_title("Prediction Heatmap")
+        ax[0].set_xlabel("RX-antenna")      # Set x-axis label
+        ax[0].set_ylabel("TX antenna")       # Set y-axis label
+
+        # Plot the true values heatmap
+        sns.heatmap(true_reshaped, ax=ax[1], cmap="viridis", cbar=True)
+        ax[1].set_title("True Values Heatmap")
+        ax[1].set_xlabel("RX-antenna")      # Set x-axis label
+        ax[1].set_ylabel("TX antenna")       # Set y-axis label
 
 
         # Create a figure for the plots

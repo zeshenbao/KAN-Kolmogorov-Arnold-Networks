@@ -119,7 +119,7 @@ class KANModel():
 
         plt.show()
 
-    def plot_deepmimo(self, true_sample, pred_sample, save=False):
+    def plot_deepmimo(self, true_sample=None, pred_sample=None, save=False):
 
         # Set global font size and improve readability
         plt.rcParams.update({
@@ -136,7 +136,6 @@ class KANModel():
 
 
         reshape_dim = int(np.sqrt(pred_sample.shape[0]))
-        print(y_pred.shape)
         y_pred = pred_sample
         prediction_reshaped = torch.rot90(y_pred.reshape(reshape_dim, reshape_dim), k=1, dims=(0,1))
         true_reshaped = torch.rot90(true_sample.reshape(reshape_dim, reshape_dim), k=1, dims=(0,1))
