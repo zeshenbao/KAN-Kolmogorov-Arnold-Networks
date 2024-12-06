@@ -20,7 +20,7 @@ torch.manual_seed(0)
 
 class KANWrapper(BaseEstimator, RegressorMixin):
 
-    def __init__(self, data=None, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01, deepmimo=False):
+    def __init__(self, data=None, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01, deepmimo=False, epochs=1):
         """
         Initialize the KAN model with the desired hyperparameters.
 
@@ -38,6 +38,7 @@ class KANWrapper(BaseEstimator, RegressorMixin):
         self.seed = seed
         self.lr = lr 
         self.lamb = lamb
+        self.epochs = epochs
 
         if self.deepmimo:
             self.X_train =  self.data['train'][0]           
@@ -55,7 +56,7 @@ class KANWrapper(BaseEstimator, RegressorMixin):
 
         
         # Initialize the actual KAN model with the parameters
-        self.model = KAN(width=self.width, grid=self.grid, k=self.k, seed=self.seed)
+        self.model = KAN(width=self.width, grid=self.grid, k=self.k, seed=self.seed, auto_save=False)
 
         
     def fit(self, X, y):
@@ -64,10 +65,20 @@ class KANWrapper(BaseEstimator, RegressorMixin):
 
         Parameters:
         """
+
         _dataset = self.dataset
-        _dataset['train_input'] = torch.tensor(X).float()
-        _dataset['train_label'] = torch.tensor(y).float()
-        self.model.fit(_dataset, opt="LBFGS", steps=50, lr=self.lr, lamb=self.lamb)
+        if isinstance(X, torch.Tensor):
+            _dataset['train_input'] = X.clone().detach().float() #X.clone().detach().float()#torch.tensor(X).float()
+        else:
+            _dataset['train_input'] = torch.tensor(X).float()
+
+        if isinstance(y, torch.Tensor):
+            _dataset['train_label'] = y.clone().detach().float() #y.clone().detach().float()#torch.tensor(y).float()
+
+        else:
+            _dataset['train_input'] = torch.tensor(y).float()
+        
+        self.model.fit(_dataset, opt="LBFGS", steps=self.epochs, lr=self.lr, lamb=self.lamb)
         return self
 
     def predict(self, X):
@@ -116,5 +127,5 @@ class KANWrapper(BaseEstimator, RegressorMixin):
             setattr(self, parameter, value)
         
         # Re-initialize the model with updated parameters
-        self.model = KAN(width=self.width, grid=self.grid, k=self.k, seed=self.seed)
+        self.model = KAN(width=self.width, grid=self.grid, k=self.k, seed=self.seed, auto_save=False)
         return self

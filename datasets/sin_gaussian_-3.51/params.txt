@@ -1,0 +1,10 @@
+n_datapoints: 1000
+start_x, end_x: (-10, 10)
+function: sin
+noise: gaussian
+snr, snr_db: (0.44570740747107973, -3.509501480608242)
+
+Noise specific
+(pink noise only) amplitude: None
+(uniform noise only) upper_bound, lower_bound: (None, None)
+(gaussian noise only) std: 1
