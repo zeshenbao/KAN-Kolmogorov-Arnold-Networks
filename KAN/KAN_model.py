@@ -146,9 +146,11 @@ class KANModel():
         
         # Plot the prediction heatmap
         sns.heatmap(prediction_reshaped, ax=ax[0], cmap="viridis", cbar=True)
+
         ax[0].set_title("Prediction Heatmap")
         ax[0].set_xlabel("RX-antenna")      # Set x-axis label
         ax[0].set_ylabel("TX antenna")       # Set y-axis label
+
 
         # Plot the true values heatmap
         sns.heatmap(true_reshaped, ax=ax[1], cmap="viridis", cbar=True)

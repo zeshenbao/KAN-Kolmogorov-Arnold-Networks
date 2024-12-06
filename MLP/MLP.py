@@ -209,9 +209,9 @@ class MLP(nn.Module):
         prediction_reshaped = y_pred[0,:].reshape(reshape_dim, reshape_dim)
         true_reshaped = data['test'][1][0,:].reshape(reshape_dim, reshape_dim)
 
-        scaler = MinMaxScaler()
-        prediction_reshaped = scaler.fit_transform(prediction_reshaped)
-        true_reshaped = scaler.fit_transform(true_reshaped)
+        #scaler = MinMaxScaler()
+        #prediction_reshaped = scaler.inverse_transform(prediction_reshaped)
+        #true_reshaped = scaler.inverse_transform(true_reshaped)
 
 
         # Create a figure for the plots
@@ -219,7 +219,7 @@ class MLP(nn.Module):
 
         # Plot the prediction heatmap
         sns.heatmap(prediction_reshaped, ax=ax[0], cmap="viridis", cbar=True)
-        ax[0].set_title("Prediction Heatmap")
+        ax[0].set_title("Prediction Heatmap MLP")
 
         # Plot the true values heatmap
         sns.heatmap(true_reshaped, ax=ax[1], cmap="viridis", cbar=True)
