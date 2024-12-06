@@ -44,11 +44,11 @@ class MLP(nn.Module):
         if deepmimo:
             self.X_train =  data['train'][0]           
             self.y_train = data['train'][1]
-            self.X_validation = data['test'][0]
-            self.y_validation = data['test'][1]
+            self.X_validation = data['validation'][0]
+            self.y_validation = data['validation'][1]
             self.X_test =  data['test'][0]
             self.y_test = data['test'][1]
-            self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_test, "test_label":self.y_test}
+            self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_validation, "test_label":self.y_validation}
 
         else:
             self.X_train =  data['train'][0][:,1].unsqueeze(1)              # get the y_noise

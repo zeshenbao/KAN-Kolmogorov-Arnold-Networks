@@ -8,6 +8,8 @@ class CreateInput():
         if self.deepmimo:
             self.y_train = pd.read_csv(f'./datasets/{function_folder}/y_data_train.csv', index_col=None)
             self.y_test = pd.read_csv(f'./datasets/{function_folder}/y_data_test.csv', index_col=None)
+            self.y_validation = pd.read_csv(f'./datasets/{function_folder}/y_data_val.csv', index_col=None)
+            self.X_validation = pd.read_csv(f'./datasets/{function_folder}/X_data_val.csv', index_col=None)
             self.X_train = pd.read_csv(f'./datasets/{function_folder}/X_data_train.csv', index_col=None)
             self.X_test = pd.read_csv(f'./datasets/{function_folder}/X_data_test.csv', index_col=None)
         else:
@@ -41,7 +43,7 @@ class CreateInput():
         if self.deepmimo:
             train_tensors = self.process_data(self.X_train, self.y_train)
             test_tensors = self.process_data(self.X_test, self.y_test)
-            validation_tensors = None
+            validation_tensors = self.process_data(self.X_validation, self.y_validation)
             true_tensors = None
 
         else:
