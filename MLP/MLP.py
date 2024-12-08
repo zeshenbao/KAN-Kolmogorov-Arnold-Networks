@@ -242,6 +242,67 @@ class MLP(nn.Module):
 
         plt.show()
 
+    def plot_sequence(self, data, y_preds, type_='test', save=False):
+
+         # Define colors
+        viridis = plt.cm.viridis
+        data_point_color = viridis(0.5)
+        true_function_color = viridis(0.8)
+        predicted_function_color = viridis(0.2)
+
+        plt.figure(figsize=(8,6))
+
+        # Set font size, grid, etc.
+        plt.rcParams.update({
+            'font.size': 15,
+            'axes.labelsize': 15,
+            'axes.titlesize': 15,
+            'legend.fontsize': 15,
+            'axes.grid': True,
+            'grid.alpha': 0.3,
+            'axes.linewidth': 1.5,
+            'xtick.major.width': 1.5,
+            'ytick.major.width': 1.5,
+        })
+
+        # samples
+        x_values_samples = np.linspace(-10, 10, y_preds.shape[-1])
+        y_noise = data[type_][0][0]
+        print(y_noise.shape)
+
+        print(y_preds.shape[-1])
+
+        # plot noisy datapoints
+        #plt.plot(x_values_samples, y_noise, "o", markersize=1, linestyle='None', label=f"{type_} data")
+        plt.scatter(x_values_samples, y_noise, label=f"{type_} data".capitalize(), color=data_point_color, alpha=0.8, s=70, zorder=3, marker='.', linestyle='None')
+    
+        # all data points
+        x_all = np.linspace(-10, 10, 1000)
+        y_true =np.sin(x_all)
+        
+        # plot true function
+        plt.plot(x_all, y_true, "-", label='True function', color=true_function_color, linewidth=3, zorder=3)
+        
+        #sorted_x, indices = torch.sort(x_values_samples, dim = 0)
+        sorted_preds = y_preds[0]
+
+        # plot the predictions
+        plt.plot(x_values_samples, sorted_preds, label='KAN predictions', color=predicted_function_color, linestyle="--", marker='o', linewidth=3, zorder=3)
+
+        plt.grid(True, zorder=0, alpha=0.5)
+        #plt.ylim(-2, 2)
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.legend(loc='upper right')
+        #plt.title("Prediction using KAN", fontsize=14, weight='bold')
+        plt.tight_layout()
+
+        if save:
+            os.makedirs(self.RESULTSPATH, exist_ok=True)
+            plt.savefig(f'{self.RESULTSPATH}/train_plot.png', dpi=300)
+
+        plt.show()
+
 
     def plot_loss(self, loss_data, save=False,deepmimo=False):
         """
