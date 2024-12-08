@@ -45,7 +45,8 @@ class KANModel():
         start = time.time()
         results = self.model.fit(self.dataset, opt="LBFGS", steps=self.epochs, lr=self.lr, lamb=self.lamb)
         end = time.time()
-
+        self.train_loss = results['train_loss']
+        self.val_loss = results['test_loss']
         elapsed_time = end - start
         return results, elapsed_time
 
@@ -165,7 +166,10 @@ class KANModel():
 
         if save:
             os.makedirs(self.RESULTSPATH, exist_ok=True)
-            plt.savefig(f'{self.RESULTSPATH}/pred_heatmap_plot.png', dpi=300)
+            if noisy:
+                plt.savefig(f'{self.RESULTSPATH}/noisy_heatmap_plot.png', dpi=300)
+            else:
+                plt.savefig(f'{self.RESULTSPATH}/pred_heatmap_plot.png', dpi=300)
 
         plt.show()
 
@@ -253,8 +257,8 @@ class KANModel():
             file.write(f"seed: {self.seed}\n")
             file.write(f"lr: {self.lr}\n")
             file.write(f"lamb: {self.lamb}\n")
-            file.write(f"final validation loss: {self.val_loss.iloc[-1]}\n")
-            file.write(f"final training loss: {self.train_loss.iloc[-1]}\n")
+            file.write(f"final validation loss: {self.val_loss[-1]}\n")
+            file.write(f"final training loss: {self.train_loss[-1]}\n")
                  # Write extra parameters if provided
             if extra_params:
                 for key, value in extra_params.items():

@@ -318,8 +318,8 @@ class MLP(nn.Module):
             file.write(f"input size: {self.input_size}\n")
             file.write(f"hidden-layers: {self.hidden_sizes}\n")
             file.write(f"output size: {self.output_size}\n")
-            file.write(f"final validation loss: {self.val_loss.iloc[-1]}\n")
-            file.write(f"final training loss: {self.train_loss.iloc[-1]}\n")
+            file.write(f"final validation loss: {self.val_loss_list[-1]}\n")
+            file.write(f"final training loss: {self.loss_list[-1]}\n")
 
         if extra_params:
             with open(file_path, "a") as file:
