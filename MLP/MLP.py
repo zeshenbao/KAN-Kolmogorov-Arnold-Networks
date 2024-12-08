@@ -75,6 +75,7 @@ class MLP(nn.Module):
                 y_pred = self(X_tensor)
                 res["preds"] = y_pred
                 res["test_loss"] = torch.sqrt(loss(y_pred, self.y_test))
+            self.test_loss = res['test_loss']
             return res
         else:
             self.eval()
@@ -173,7 +174,7 @@ class MLP(nn.Module):
         plt.plot(sorted_x, sorted_preds, label='MLP predictions', color=predicted_function_color, linestyle="--", linewidth=3, zorder=3)
 
         plt.grid(True, zorder=0, alpha=0.5)
-        plt.xlabel("x")
+        plt.xlabel("t")
         plt.ylabel("y")
         plt.legend(loc='upper right')
         #plt.title("Prediction using MLP", fontsize=14, weight='bold')
@@ -291,7 +292,7 @@ class MLP(nn.Module):
 
         plt.grid(True, zorder=0, alpha=0.5)
         #plt.ylim(-2, 2)
-        plt.xlabel("x")
+        plt.xlabel("t")
         plt.ylabel("y")
         plt.legend(loc='upper right')
         #plt.title("Prediction using KAN", fontsize=14, weight='bold')
@@ -381,6 +382,7 @@ class MLP(nn.Module):
             file.write(f"output size: {self.output_size}\n")
             file.write(f"final validation loss: {self.val_loss.iloc[-1]}\n")
             file.write(f"final training loss: {self.train_loss.iloc[-1]}\n")
+            file.write(f"test loss: {self.test_loss}\n")
 
         if extra_params:
             with open(file_path, "a") as file:

@@ -56,6 +56,7 @@ class KANModel():
         loss = torch.nn.MSELoss()
         y_pred = self.model(self.X_test).detach()
         results = {"preds": y_pred, "test_loss": torch.sqrt(loss(y_pred, self.y_test))}
+        self.test_loss = results['test_loss']
         return results
 
     def plot_prediction(self, data, y_preds, type_='test', save=False):
@@ -107,7 +108,7 @@ class KANModel():
 
         plt.grid(True, zorder=0, alpha=0.5)
         #plt.ylim(-2, 2)
-        plt.xlabel("x")
+        plt.xlabel("t")
         plt.ylabel("y")
         plt.legend(loc='upper right')
         #plt.title("Prediction using KAN", fontsize=14, weight='bold')
@@ -215,7 +216,7 @@ class KANModel():
 
         plt.grid(True, zorder=0, alpha=0.5)
         #plt.ylim(-2, 2)
-        plt.xlabel("x")
+        plt.xlabel("t")
         plt.ylabel("y")
         plt.legend(loc='upper right')
         #plt.title("Prediction using KAN", fontsize=14, weight='bold')
@@ -315,6 +316,8 @@ class KANModel():
             file.write(f"lamb: {self.lamb}\n")
             file.write(f"final validation loss: {self.val_loss.iloc[-1]}\n")
             file.write(f"final training loss: {self.train_loss.iloc[-1]}\n")
+            file.write(f"test loss: {self.test_loss}\n")
+            
                  # Write extra parameters if provided
             if extra_params:
                 for key, value in extra_params.items():
