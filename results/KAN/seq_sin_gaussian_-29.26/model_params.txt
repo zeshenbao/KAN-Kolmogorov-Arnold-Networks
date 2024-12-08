@@ -1,0 +1,9 @@
+width: [[30, 0], [20, 0], [20, 0], [20, 0], [30, 0]]
+grid: 3
+k: 3
+seed: 42
+lr: 0.01
+lamb: 0
+final validation loss: 0.002829362638294697
+final training loss: 0.00024768291041254997
+test loss: 0.0017361853970214725
