@@ -43,10 +43,11 @@ class KANWrapper(BaseEstimator, RegressorMixin):
         if self.deepmimo:
             self.X_train =  self.data['train'][0]           
             self.y_train = self.data['train'][1]
+            self.X_validation =  data['validation'][0]
+            self.y_validation = data['validation'][1]
             self.X_test =  self.data['test'][0]
             self.y_test = self.data['test'][1]
-            self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_test, "test_label":self.y_test}
-
+            self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_validation, "test_label":self.y_validation}
         else:
             self.X_train =  self.data['train'][0][:,1].unsqueeze(1)           # get the y_noise
             self.y_train = self.data['train'][1].unsqueeze(1)
@@ -109,7 +110,8 @@ class KANWrapper(BaseEstimator, RegressorMixin):
             'seed': self.seed,
             'lr': self.lr,
             'lamb': self.lamb,
-            'deepmimo': self.deepmimo
+            'deepmimo': self.deepmimo,
+            'epochs': self.epochs
         }
     
 
