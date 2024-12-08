@@ -173,6 +173,62 @@ class KANModel():
 
         plt.show()
 
+    
+    def plot_deepmimo_with_noise(self, true_sample=None, pred_sample=None,noisy_sample=None, save=False):
+
+        # Set global font size and improve readability
+        plt.rcParams.update({
+            'font.size': 15,
+            'axes.labelsize': 15,
+            'axes.titlesize': 15,
+            'legend.fontsize': 15,
+            'axes.grid': True,  # Enable grid globally
+            'grid.alpha': 0.3,   # Make grid lines subtle
+            'axes.linewidth': 1.5,  # Thicker axis lines
+            'xtick.major.width': 1.5, # Thicker x-tick lines
+            'ytick.major.width': 1.5, # Thicker y-tick lines
+        })
+
+
+        reshape_dim = int(np.sqrt(pred_sample.shape[0]))
+        y_pred = pred_sample
+        noisy = noisy_sample
+        noisy_reshaped = torch.rot90(noisy.reshape(reshape_dim, reshape_dim), k=1, dims=(0,1))
+        prediction_reshaped = torch.rot90(y_pred.reshape(reshape_dim, reshape_dim), k=1, dims=(0,1))
+        true_reshaped = torch.rot90(true_sample.reshape(reshape_dim, reshape_dim), k=1, dims=(0,1))
+
+        # Create a figure for the plots
+        fig, ax = plt.subplots(1, 3, figsize=(16, 5))        
+        # Plot the prediction heatmap
+        sns.heatmap(noisy_reshaped, ax=ax[0], cmap="viridis", cbar=True)
+
+        
+        ax[0].set_title("Noisy Heatmap")
+        ax[0].set_xlabel("RX-antenna")      # Set x-axis label
+        ax[0].set_ylabel("TX antenna")       # Set y-axis label
+      
+        # Plot the prediction heatmap
+        sns.heatmap(prediction_reshaped, ax=ax[1], cmap="viridis", cbar=True)
+        ax[1].set_title("Prediction Heatmap")
+        ax[1].set_xlabel("RX-antenna")      # Set x-axis label
+        ax[1].set_ylabel("TX antenna")       # Set y-axis label
+
+
+        # Plot the true values heatmap
+        sns.heatmap(true_reshaped, ax=ax[2], cmap="viridis", cbar=True)
+        ax[2].set_title("True Values Heatmap")
+        ax[2].set_xlabel("RX-antenna")      # Set x-axis label
+        ax[2].set_ylabel("TX antenna")       # Set y-axis label
+
+        # Adjust layout and display
+        plt.tight_layout()
+
+        if save:
+            os.makedirs(self.RESULTSPATH, exist_ok=True)
+            plt.savefig(f'{self.RESULTSPATH}/pred__noisy_heatmap_plot.png', dpi=300)
+
+        plt.show()
+
 
 
     def plot_loss(self, loss_data, save=False):
