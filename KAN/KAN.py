@@ -20,7 +20,7 @@ torch.manual_seed(0)
 
 class KANWrapper(BaseEstimator, RegressorMixin):
 
-    def __init__(self, data=None, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01, deepmimo=False, epochs=1):
+    def __init__(self, width=[1, 3, 3, 1], grid=3, k=5, seed=42, lr=0.001, lamb=0.01, epochs=1):
         """
         Initialize the KAN model with the desired hyperparameters.
 
@@ -30,8 +30,6 @@ class KANWrapper(BaseEstimator, RegressorMixin):
         - k (int): Parameter k.
         - seed (int): Random seed.
         """
-        self.deepmimo = deepmimo
-        self.data = data
         self.width = width
         self.grid = grid
         self.k = k
@@ -39,21 +37,6 @@ class KANWrapper(BaseEstimator, RegressorMixin):
         self.lr = lr 
         self.lamb = lamb
         self.epochs = epochs
-
-        if self.deepmimo:
-            self.X_train =  self.data['train'][0]           
-            self.y_train = self.data['train'][1]
-            self.X_test =  self.data['test'][0]
-            self.y_test = self.data['test'][1]
-            self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_test, "test_label":self.y_test}
-
-        else:
-            self.X_train =  self.data['train'][0][:,1].unsqueeze(1)           # get the y_noise
-            self.y_train = self.data['train'][1].unsqueeze(1)
-            self.X_validation =  self.data['validation'][0][:,1].unsqueeze(1) # get the y_noise
-            self.y_validation = self.data['validation'][1].unsqueeze(1)
-            self.dataset = {"train_input": self.X_train, "train_label":self.y_train, "test_input":self.X_validation, "test_label":self.y_validation}
-
         
         # Initialize the actual KAN model with the parameters
         self.model = KAN(width=self.width, grid=self.grid, k=self.k, seed=self.seed, auto_save=False)
@@ -66,7 +49,7 @@ class KANWrapper(BaseEstimator, RegressorMixin):
         Parameters:
         """
 
-        _dataset = self.dataset
+        _dataset = {'train_input':None, 'train_label':None, 'test_input':None, 'test_label':None}
         if isinstance(X, torch.Tensor):
             _dataset['train_input'] = X.clone().detach().float() #X.clone().detach().float()#torch.tensor(X).float()
         else:
@@ -76,9 +59,15 @@ class KANWrapper(BaseEstimator, RegressorMixin):
             _dataset['train_label'] = y.clone().detach().float() #y.clone().detach().float()#torch.tensor(y).float()
 
         else:
-            _dataset['train_input'] = torch.tensor(y).float()
+            _dataset['train_label'] = torch.tensor(y).float()
+
+        _dataset['test_input'] = _dataset['train_input']
+        _dataset['test_label'] = _dataset['train_label']
         
         self.model.fit(_dataset, opt="LBFGS", steps=self.epochs, lr=self.lr, lamb=self.lamb)
+
+            # Clear CUDA cache
+        torch.cuda.empty_cache()
         return self
 
     def predict(self, X):
@@ -102,14 +91,12 @@ class KANWrapper(BaseEstimator, RegressorMixin):
         - Dictionary of parameter names mapped to their values.
         """
         return {
-            'data': self.data,
             'width': self.width,
             'grid': self.grid,
             'k': self.k,
             'seed': self.seed,
             'lr': self.lr,
             'lamb': self.lamb,
-            'deepmimo': self.deepmimo
         }
     
 
@@ -126,6 +113,9 @@ class KANWrapper(BaseEstimator, RegressorMixin):
         for parameter, value in parameters.items():
             setattr(self, parameter, value)
         
+                # Delete the old model to free up memory
+        del self.model
+        torch.cuda.empty_cache()
         # Re-initialize the model with updated parameters
         self.model = KAN(width=self.width, grid=self.grid, k=self.k, seed=self.seed, auto_save=False)
         return self
