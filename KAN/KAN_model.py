@@ -293,7 +293,7 @@ class KANModel():
             os.makedirs(self.RESULTSPATH, exist_ok=True)
             plt.savefig(f'{self.RESULTSPATH}/loss.png', dpi=300)
             print("saved loss to ", f'{ self.RESULTSPATH}/loss.png')
-            self.write_params_to_file()
+            
 
         plt.show()
 
