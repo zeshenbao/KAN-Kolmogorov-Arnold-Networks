@@ -3,9 +3,9 @@ n_datapoints: 30
 start_x, end_x: (-10, 10)
 function: sin
 noise: gaussian
-snr, snr_db: (9558.097111784662, 39.803714387081016)
+snr, snr_db: (0.023558374753252228, -16.278546739885375)
 
 Noise specific
 (pink noise only) amplitude: None
 (uniform noise only) upper_bound, lower_bound: (None, None)
-(gaussian noise only) std: 0.007
+(gaussian noise only) std: 4.5
