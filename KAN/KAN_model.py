@@ -119,7 +119,7 @@ class KANModel():
 
         plt.show()
 
-    def plot_deepmimo(self, true_sample=None, pred_sample=None, save=False):
+    def plot_deepmimo(self, true_sample=None, pred_sample=None, save=False, noisy=False):
 
         # Set global font size and improve readability
         plt.rcParams.update({
@@ -146,7 +146,10 @@ class KANModel():
         # Plot the prediction heatmap
         sns.heatmap(prediction_reshaped, ax=ax[0], cmap="viridis", cbar=True)
 
-        ax[0].set_title("Prediction Heatmap")
+        if noisy:
+            ax[0].set_title("Noisy Heatmap")
+        else:
+            ax[0].set_title("Prediction Heatmap")
         ax[0].set_xlabel("RX-antenna")      # Set x-axis label
         ax[0].set_ylabel("TX antenna")       # Set y-axis label
 
