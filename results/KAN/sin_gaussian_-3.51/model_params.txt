@@ -1,8 +1,0 @@
-width: [[1, 0], [1, 0], [1, 0]]
-grid: 3
-k: 5
-seed: 42
-lr: 0.001
-lamb: 0
-final validation loss: 0.561492383480072
-final training loss: 0.5766873955726624

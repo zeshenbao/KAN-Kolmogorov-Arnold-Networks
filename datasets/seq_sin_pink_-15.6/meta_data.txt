@@ -1,0 +1,11 @@
+n_samples: 100
+n_datapoints: 30
+start_x, end_x: (-10, 10)
+function: sin
+noise: pink
+snr, snr_db: (0.027573344146514817, -15.59510558656541)
+
+Noise specific
+(pink noise only) amplitude: 4
+(uniform noise only) upper_bound, lower_bound: (None, None)
+(gaussian noise only) std: None

@@ -1,9 +1,0 @@
-input to model: y_noise, y_true
-width: [[1, 0], [3, 0], [3, 0], [1, 0]]
-grid: 5
-k: 3
-seed: 0
-opt: LBFGS
-steps: 50
-lr: 0.01
-lamb: 0.0

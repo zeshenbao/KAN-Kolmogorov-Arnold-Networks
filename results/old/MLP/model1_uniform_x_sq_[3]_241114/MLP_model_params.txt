@@ -1,7 +1,0 @@
-input to model: y_noise, y_true (fixed)
-width: [3]
-opt: Adam (fixed)
-steps: 800
-lr: 0.01 (fixed)
-final validation loss: 5.207820892333984
-final training loss: 5.178361892700195

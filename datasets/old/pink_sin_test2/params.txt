@@ -1,5 +1,0 @@
-n_datapoints: 1000
-start_x, end_x: (-10, 10)
-snr, snr_db: (10.501635290918102, 10.212569316912683)
-function name: np.sin(x)
-noise:pink noise

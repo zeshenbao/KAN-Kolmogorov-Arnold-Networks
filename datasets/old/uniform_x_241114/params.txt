@@ -1,5 +1,0 @@
-n_datapoints: 1000
-start_x, end_x: (-10, 10)
-snr, snr_db: (95.22814948598435, 19.787653450165212)
-function name: x
-noise:uniform noise
