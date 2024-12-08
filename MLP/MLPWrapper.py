@@ -72,7 +72,6 @@ class MLPWrapper(BaseEstimator, RegressorMixin):
         else:
             y_ = torch.tensor(y).float()
 
-        y_ = torch.tensor(y).float()
         self.model.fit(X_, y_, n_epochs=self.epochs, cross_validation=True, deepmimo=self.deepmimo)
         return self
 
