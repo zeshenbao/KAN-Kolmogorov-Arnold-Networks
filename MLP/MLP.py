@@ -273,20 +273,20 @@ class MLP(nn.Module):
 
         
         ax[0].set_title("Noisy Heatmap")
-        ax[0].set_xlabel("RX-antenna")      # Set x-axis label
+        ax[0].set_xlabel("RX antenna")      # Set x-axis label
         ax[0].set_ylabel("TX antenna")       # Set y-axis label
       
         # Plot the prediction heatmap
         sns.heatmap(prediction_reshaped, ax=ax[1], cmap="viridis", cbar=True)
         ax[1].set_title("Prediction Heatmap")
-        ax[1].set_xlabel("RX-antenna")      # Set x-axis label
+        ax[1].set_xlabel("RX antenna")      # Set x-axis label
         ax[1].set_ylabel("TX antenna")       # Set y-axis label
 
 
         # Plot the true values heatmap
         sns.heatmap(true_reshaped, ax=ax[2], cmap="viridis", cbar=True)
         ax[2].set_title("True Values Heatmap")
-        ax[2].set_xlabel("RX-antenna")      # Set x-axis label
+        ax[2].set_xlabel("RX antenna")      # Set x-axis label
         ax[2].set_ylabel("TX antenna")       # Set y-axis label
 
         # Adjust layout and display
