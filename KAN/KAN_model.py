@@ -297,9 +297,9 @@ class KANModel():
 
         plt.show()
 
-     def plot_sequence(self, data, y_preds, type_='test', save=False):
+    def plot_sequence(self, data, y_preds, type_='test', save=False):
 
-         # Define colors
+        # Define colors
         viridis = plt.cm.viridis
         data_point_color = viridis(0.5)
         true_function_color = viridis(0.8)
