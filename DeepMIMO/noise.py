@@ -50,6 +50,7 @@ def brownian_noise(f):
 
 @PSDGenerator
 def pink_noise(f):
+    print(f)
     return 1/np.where(f == 0, float('inf'), np.sqrt(f))
 
 """

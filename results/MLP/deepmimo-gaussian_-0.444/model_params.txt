@@ -1,0 +1,7 @@
+input size: 1024
+hidden-layers: [1000]
+output size: 1024
+final validation loss: 0.09574701637029648
+final training loss: 0.05304726958274841
+test_loss: 0.1014697253704071
+average-pred-loss: 10.543210983276367

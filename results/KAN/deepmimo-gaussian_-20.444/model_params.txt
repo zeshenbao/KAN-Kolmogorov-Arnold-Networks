@@ -1,0 +1,11 @@
+width: [[1024, 0], [500, 0], [1024, 0]]
+grid: 10
+k: 3
+seed: 42
+lr: 0.1
+lamb: 0
+final validation loss: 0.30635589361190796
+final training loss: 0.04717834293842316
+test_loss: 0.30591103434562683
+noise-average-mse: 42715.9296875
+pred-average-mse: 95.8275146484375
